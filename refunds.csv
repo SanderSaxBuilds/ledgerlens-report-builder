@@ -1,0 +1,6 @@
+refund_id,order_id,refund_date,currency,amount,reason
+REF-201,ORD-1002,2026-09-06,USD,140.00,partial return
+REF-202,ORD-1004,2026-09-09,USD,560.00,cancelled
+REF-203,ORD-9999,2026-09-11,USD,90.00,unknown order
+REF-204,ORD-1003,2026-09-12,USD,2400.00,amount exceeds order
+REF-205,ORD-1005,bad-date,USD,75.00,invalid date example
