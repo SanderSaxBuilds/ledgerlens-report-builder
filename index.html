@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A fictional repeatable reporting workflow case study.">
+  <title>LedgerLens Report Builder</title>
+  <style>
+    :root { --ink:#eef3ff; --muted:#9aa8c7; --panel:#111a2d; --line:#263453; --blue:#6ba4ff; --green:#52d69a; --amber:#ffca6a; --red:#ff7383; --bg:#07101f; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; color:var(--ink); background:radial-gradient(circle at 10% 0%, #15264b 0, transparent 38%), var(--bg); font:15px/1.5 Inter, ui-sans-serif, system-ui, sans-serif; }
+    button, input { font:inherit; }
+    button { color:var(--ink); cursor:pointer; }
+    .shell { width:min(1220px, calc(100% - 32px)); margin:0 auto; padding:32px 0 64px; }
+    header { display:flex; justify-content:space-between; gap:24px; align-items:flex-start; margin-bottom:28px; }
+    .eyebrow { color:var(--blue); font-weight:800; letter-spacing:.14em; text-transform:uppercase; font-size:12px; }
+    h1 { margin:4px 0 8px; font-size:clamp(34px, 6vw, 66px); line-height:.98; letter-spacing:-.055em; }
+    .lede { max-width:700px; color:var(--muted); font-size:17px; }
+    .fictional { border:1px solid var(--line); border-radius:999px; padding:8px 12px; color:var(--muted); white-space:nowrap; }
+    .grid { display:grid; grid-template-columns:340px 1fr; gap:20px; }
+    .panel { background:color-mix(in srgb, var(--panel) 92%, transparent); border:1px solid var(--line); border-radius:20px; box-shadow:0 16px 60px rgba(0,0,0,.22); }
+    .controls { padding:22px; align-self:start; position:sticky; top:16px; }
+    h2 { margin:0 0 6px; font-size:20px; }
+    .help { margin:0 0 20px; color:var(--muted); }
+    .file-card { display:block; margin:12px 0; padding:14px; border:1px dashed #3b4e76; border-radius:14px; background:#0b1427; }
+    .file-card strong { display:block; margin-bottom:5px; }
+    .file-card span { color:var(--muted); font-size:13px; overflow-wrap:anywhere; }
+    input[type=file] { display:block; width:100%; margin-top:10px; color:var(--muted); font-size:12px; }
+    .actions { display:grid; gap:10px; margin-top:18px; }
+    .primary, .secondary, .ghost { border:1px solid transparent; border-radius:12px; padding:11px 14px; font-weight:750; }
+    .primary { background:linear-gradient(135deg,#4f8eff,#7b6cff); }
+    .secondary { background:#17233b; border-color:#30405f; }
+    .ghost { background:transparent; border-color:var(--line); color:var(--muted); }
+    .notice { margin-top:16px; padding:11px 12px; border-radius:12px; font-size:13px; }
+    .notice.success { background:#0d2c25; color:#8cf1c4; }
+    .notice.error { background:#351b24; color:#ff9bac; }
+    .content { display:grid; gap:20px; }
+    .empty { padding:58px 28px; text-align:center; color:var(--muted); }
+    .report { display:grid; gap:20px; }
+    .metrics { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; }
+    .metric { padding:18px; min-height:126px; }
+    .metric span { color:var(--muted); font-size:13px; }
+    .metric strong { display:block; margin-top:18px; font-size:clamp(22px,3vw,32px); letter-spacing:-.04em; }
+    .quality { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 20px; }
+    .quality p { margin:2px 0; color:var(--muted); }
+    .quality-actions { display:flex; flex-wrap:wrap; gap:8px; }
+    .quality-actions button { padding:9px 11px; }
+    .exceptions { overflow:hidden; }
+    .exceptions-head { display:flex; justify-content:space-between; gap:16px; padding:20px; border-bottom:1px solid var(--line); }
+    .filters { display:flex; gap:7px; flex-wrap:wrap; }
+    .filters button { padding:7px 10px; border:1px solid var(--line); border-radius:999px; background:transparent; color:var(--muted); }
+    .filters button[aria-pressed=true] { background:#20345b; color:var(--ink); border-color:#4167ad; }
+    .table-wrap { overflow:auto; }
+    table { width:100%; border-collapse:collapse; min-width:720px; }
+    th, td { padding:13px 16px; text-align:left; border-bottom:1px solid #1e2a44; vertical-align:top; }
+    th { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.06em; }
+    code { color:#a9c8ff; }
+    .pill { display:inline-block; padding:3px 8px; border-radius:999px; font-size:11px; font-weight:800; text-transform:uppercase; }
+    .pill.error { background:#4b1d2a; color:#ff96a3; }
+    .pill.warning { background:#493719; color:#ffd889; }
+    .empty-row { color:var(--muted); text-align:center; padding:30px; }
+    .fineprint { color:var(--muted); font-size:12px; text-align:right; }
+    [hidden] { display:none !important; }
+    @media (max-width:940px) { .grid { grid-template-columns:1fr; } .controls { position:static; } .metrics { grid-template-columns:repeat(2,1fr); } }
+    @media (max-width:580px) { header,.quality,.exceptions-head { flex-direction:column; } .metrics { grid-template-columns:1fr; } .fictional { white-space:normal; } }
+    @media print { body { background:#fff; color:#101828; } .shell { width:100%; padding:0; } .controls,.fictional,.quality-actions,.filters { display:none; } .grid { display:block; } .panel { border:1px solid #ccd3df; box-shadow:none; background:#fff; } .metric span,.quality p,.fineprint { color:#475467; } .pill.error,.pill.warning { color:#101828; background:#eee; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <div class="eyebrow">Repeatable reporting workflow</div>
+        <h1>LedgerLens</h1>
+        <p class="lede">Turn two messy CSV exports into a consistent management report, with known totals and every rejected row explained.</p>
+      </div>
+      <div class="fictional">Fictional data · portfolio case study</div>
+    </header>
+
+    <div class="grid">
+      <aside class="panel controls" aria-label="Report controls">
+        <h2>Source files</h2>
+        <p class="help">Load orders and refunds, then generate the same five metrics every reporting cycle.</p>
+        <label class="file-card"><strong>Orders CSV</strong><span id="orders-name">No file selected</span><input id="orders-file" type="file" accept=".csv,text/csv"></label>
+        <label class="file-card"><strong>Refunds CSV</strong><span id="refunds-name">No file selected</span><input id="refunds-file" type="file" accept=".csv,text/csv"></label>
+        <div class="actions">
+          <button class="primary" id="run-report">Generate report</button>
+          <button class="secondary" id="load-samples">Reload fictional sample</button>
+        </div>
+        <div id="notice" class="notice success" role="status">Loading the fictional sample data.</div>
+      </aside>
+
+      <section class="content" aria-live="polite">
+        <div id="empty-state" class="panel empty">Your validated report will appear here.</div>
+        <div id="report" class="report" hidden>
+          <section class="metrics" aria-label="Report metrics">
+            <article class="panel metric"><span>Gross revenue</span><strong id="gross">$0</strong></article>
+            <article class="panel metric"><span>Net revenue</span><strong id="net">$0</strong></article>
+            <article class="panel metric"><span>Accepted orders</span><strong id="orders">0</strong></article>
+            <article class="panel metric"><span>Average order value</span><strong id="aov">$0</strong></article>
+            <article class="panel metric"><span>Refund rate</span><strong id="refund-rate">0%</strong></article>
+          </section>
+
+          <section class="panel quality">
+            <div><h2>Quality gate</h2><p id="quality-summary"></p><p><span id="issue-total"></span> · Generated <span id="generated"></span></p></div>
+            <div class="quality-actions">
+              <button class="ghost" id="export-json">Export report JSON</button>
+              <button class="ghost" id="export-csv">Export exceptions CSV</button>
+              <button class="secondary" id="print-report">Print report</button>
+            </div>
+          </section>
+
+          <section class="panel exceptions">
+            <div class="exceptions-head">
+              <div><h2>Exception log</h2><p class="help">Every excluded source row has a reason.</p></div>
+              <div class="filters" aria-label="Exception filters">
+                <button data-filter="all" aria-pressed="true">All</button>
+                <button data-filter="error" aria-pressed="false">Errors</button>
+                <button data-filter="warning" aria-pressed="false">Warnings</button>
+              </div>
+            </div>
+            <div class="table-wrap"><table><thead><tr><th>Level</th><th>Source</th><th>Row</th><th>Code</th><th>Explanation</th></tr></thead><tbody id="issue-body"></tbody></table></div>
+          </section>
+          <div class="fineprint">Built as an inspectable service proof. No client data is included.</div>
+        </div>
+      </section>
+    </div>
+  </main>
+  <script src="logic.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
