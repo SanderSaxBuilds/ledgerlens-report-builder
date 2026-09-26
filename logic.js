@@ -47,7 +47,10 @@
   }
 
   function isValidDate(value) {
-    return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`));
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const [year, month, day] = value.split("-").map(Number);
+    const parsed = new Date(Date.UTC(year, month - 1, day));
+    return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day;
   }
 
   function issue(severity, source, row, code, message) {
@@ -91,6 +94,7 @@
     });
 
     const validRefunds = [];
+    const refundedByOrder = new Map();
     refunds.forEach((refund) => {
       const amount = Number(refund.amount);
       let valid = true;
@@ -114,11 +118,14 @@
       if (!order) {
         issues.push(issue("error", "refunds", refund._row, "UNMATCHED_REFUND", `No valid order matches ${refund.order_id || "this refund"}.`));
         valid = false;
-      } else if (Number.isFinite(amount) && amount > order.amount) {
+      } else if (Number.isFinite(amount) && amount + (refundedByOrder.get(refund.order_id) || 0) > order.amount) {
         issues.push(issue("error", "refunds", refund._row, "OVER_REFUND", `${refund.refund_id} exceeds order ${refund.order_id}.`));
         valid = false;
       }
-      if (valid) validRefunds.push({ ...refund, amount });
+      if (valid) {
+        validRefunds.push({ ...refund, amount });
+        refundedByOrder.set(refund.order_id, (refundedByOrder.get(refund.order_id) || 0) + amount);
+      }
     });
 
     const grossRevenue = validOrders.reduce((sum, order) => sum + order.amount, 0);
