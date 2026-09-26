@@ -8,11 +8,13 @@ The demo uses fictional order and refund data. It is not client work.
 
 - Import orders.csv and refunds.csv
 - Validate required fields and numeric values
-- Detect duplicate order IDs, invalid dates, unsupported currencies, unmatched refunds, and refunds larger than their orders
+- Detect duplicate order IDs, impossible calendar dates, unsupported currencies, unmatched refunds, and cumulative refunds above the matching order total
 - Calculate gross revenue, net revenue, order count, average order value, and refund rate
 - Filter the exception log by severity
 - Export a JSON report or CSV exception log
 - Print or save the dashboard as PDF
+
+Run `node test-logic.js` and `node test-second-dataset.js` to check the sample and an independent validation dataset.
 
 ## Live demo
 
