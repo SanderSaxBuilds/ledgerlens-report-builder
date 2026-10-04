@@ -1,25 +1,31 @@
-# LedgerLens Report Builder
+# LedgerLens reporting workspace
 
-LedgerLens is a working portfolio case study for a bounded repeatable-report-builder service. It imports two CSV files, validates the records, calculates five business metrics, produces an exception log, and exports a reusable report.
+Independent reporting demonstration by Alexandr Khrustalev, using fictional USD order and refund data.
 
-The demo uses fictional order and refund data. It is not client work.
+[Open the working demonstration](https://sandersaxbuilds.github.io/ledgerlens-report-builder/)
 
-## Included workflow
+## What it does
 
-- Import orders.csv and refunds.csv
-- Validate required fields and numeric values
-- Detect duplicate order IDs, impossible calendar dates, unsupported currencies, unmatched refunds, and cumulative refunds above the matching order total
-- Calculate gross revenue, net revenue, order count, average order value, and refund rate
-- Filter the exception log by severity
-- Export a JSON report or CSV exception log
-- Print or save the dashboard as PDF
+Import two CSV files to see reconciled revenue totals, monthly movements, searchable exceptions and accepted source records. Only paid orders contribute to revenue. Refunds use their own dates and cannot exceed their associated order. Calculations use integer cents.
 
-Run `node test-logic.js` and `node test-second-dataset.js` to check the sample and an independent validation dataset.
+The overview, exceptions and accepted-row views use the same report. Changing a source disables export until a new report succeeds. Invalid sources clear the previous result. JSON includes all accepted records and totals. The exception CSV guards text cells against spreadsheet formulas. Tables paginate after 100 records. Printing captures the visible report and current table page, use JSON for the full record export.
 
-## Live demo
+## Source format
 
-https://sandersaxbuilds.github.io/ledgerlens-report-builder/
+- Orders require `order_id,order_date,currency,amount,status`, with optional `customer`.
+- Refunds require `refund_id,order_id,refund_date,currency,amount`, with optional `reason`.
+- Dates use `YYYY-MM-DD`, currency is `USD`, and amounts use nonnegative decimal notation with at most two decimal places.
+- Use a header-only refunds file when there are no refunds.
+- Each source is limited to 5 MB and 100,000 data rows.
 
-## Commercial boundary
+## Run and check
 
-A real engagement would replace the demo schemas with the buyer's two source exports, confirm five metric definitions against known totals, document refresh steps, and include two revision rounds. Hosting, private-system access, and ongoing data operations require separate written scope.
+Serve this directory with a static web server, then open `index.html`. There is no dependency installation or build step.
+
+Run `node test-logic.js` for parser and reconciliation checks. Run `node test-second-dataset.js` for application interaction checks using a small simulated DOM. The second check exercises the real application code, but does not verify browser layout or completed browser downloads.
+
+The bundled sample reconciles to USD 7,235 gross, USD 700 refunds and USD 6,535 net. Six orders and two refunds are accepted, with seven exceptions reported.
+
+## Boundaries
+
+Entered files are read in the browser and are not uploaded by this application. The bundled demonstration data is fictional. This is a single-currency reporting example, with no currency conversion, bank connection, cloud storage, tax calculation, accounting certification or production access control.
