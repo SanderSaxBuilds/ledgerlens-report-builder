@@ -1,11 +1,310 @@
-order_id,order_date,customer,currency,amount,status
-ORD-1001,2026-09-01,Northstar Studio,USD,1250.00,paid
-ORD-1002,2026-09-02,Juniper Works,USD,840.00,paid
-ORD-1003,2026-09-03,Atlas Coffee,USD,2190.00,paid
-ORD-1004,2026-09-05,Kite & Co,USD,560.00,paid
-ORD-1005,2026-09-07,Orbit Labs,USD,1475.00,paid
-ORD-1006,2026-09-10,Pine Market,USD,920.00,paid
-ORD-1006,2026-09-10,Pine Market,USD,920.00,paid
-ORD-1007,not-a-date,Glasshouse,USD,650.00,paid
-ORD-1008,2026-09-14,Field Notes,EUR,710.00,paid
-ORD-1009,2026-09-16,Blue Finch,USD,-120.00,paid
+order_id,order_date,customer,items,currency,amount,status
+SCS-10001,2025-10-01,Kira Nakamura,Gooseneck kettle,USD,64.00,paid
+SCS-10002,2025-10-02,Siobhán Reyes,Travel mug,USD,32.95,paid
+SCS-10003,2025-10-03,Priya Duarte,Brew scale,USD,48.95,paid
+SCS-10004,2025-10-05,Jonah Achebe,Gooseneck kettle,USD,64.00,paid
+SCS-10005,2025-10-08,Kofi Kaur,House blend 250 g,USD,24.95,paid
+SCS-10006,2025-10-09,Luis Sorensen,"Paper filters, Gooseneck kettle",USD,72.50,paid
+SCS-10007,2025-10-11,"Hollis and Rowe, Bakers","House blend 1 kg x5, Cleaning tablets x2",USD,304.00,paid
+SCS-10008,2025-10-11,Niall Santos,"Cleaning tablets, Paper filters x2",USD,35.95,paid
+SCS-10009,2025-10-11,Wren Varga,House blend 250 g,USD,24.95,paid
+SCS-10010,2025-10-12,Chloe Bianchi,Paper filters,USD,15.45,paid
+SCS-10011,2025-10-13,Leah Nakamura,Single origin 250 g,USD,28.95,paid
+SCS-10012,2025-10-13,Nadia Kaur,"Single origin 250 g, Cleaning tablets, House blend 250 g x2",USD,70.00,paid
+SCS-10013,2025-10-17,Aoife Castillo,Gooseneck kettle,USD,64.00,paid
+SCS-10014,2025-10-18,Sam Mensah,"Paper filters, Cleaning tablets",USD,27.45,paid
+SCS-10015,2025-10-19,Jonah Quayle,House blend 250 g,USD,24.95,paid
+SCS-10016,2025-10-20,Quinn Delgado,"House blend 1 kg, Travel mug",USD,82.00,paid
+SCS-10017,2025-10-21,Dev Sorensen,Ceramic dripper,USD,34.95,paid
+SCS-10018,2025-10-25,Zoë Whitlock,Single origin 250 g,USD,28.95,paid
+SCS-10019,2025-10-26,Tariq Brennan,Paper filters,USD,15.45,paid
+SCS-10020,2025-10-28,Pier Nine Café,"House blend 1 kg x3, Paper filters x9, Cleaning tablets x2",USD,268.50,paid
+SCS-10021,2025-10-28,Owen O'Brien,"Cleaning tablets, House blend 1 kg",USD,68.00,paid
+SCS-10022,2025-10-30,Low Tide Espresso Bar,"House blend 1 kg x5, Paper filters x8",USD,348.00,paid
+SCS-10023,2025-11-02,Owen Jensen,Gooseneck kettle,USD,64.00,paid
+SCS-10024,2025-11-02,Siobhán Santos,"Single origin 250 g, Flat burr grinder",USD,271.00,paid
+SCS-10025,2025-11-02,José Lindqvist,Hand grinder,USD,129.00,paid
+SCS-10026,2025-11-03,Wren Abbott,Paper filters,USD,15.45,paid
+SCS-10027,2025-11-04,Ben Kowalski,Hand grinder,USD,129.00,paid
+SCS-10028,2025-11-06,Maya Vogel,Brew scale,USD,48.95,paid
+SCS-10029,2025-11-06,Imani Jensen,Gift set,USD,89.00,paid
+SCS-10030,2025-11-06,Dev Ekström,"Hand grinder, House blend 250 g",USD,147.00,paid
+SCS-10031,2025-11-08,Elif Ibarra,Gift set,USD,89.00,paid
+SCS-10032,2025-11-09,Marcus Sorensen,House blend 1 kg,USD,62.95,paid
+SCS-10033,2025-11-10,Sam Vogel,Hand grinder,USD,129.00,paid
+SCS-10034,2025-11-11,Leah Holm,"Paper filters, Hand grinder",USD,137.50,paid
+SCS-10035,2025-11-14,Ben Ulloa,Paper filters x2,USD,23.95,paid
+SCS-10036,2025-11-14,Kira Iqbal,Ceramic dripper,USD,34.95,paid
+SCS-10037,2025-11-15,Leah Nakamura,"Ceramic dripper, House blend 250 g",USD,52.95,paid
+SCS-10038,2025-11-15,Leah Holm,Paper filters,USD,15.45,paid
+SCS-10039,2025-11-15,Rosa Yamada,Travel mug,USD,32.95,paid
+SCS-10040,2025-11-17,Theo Rahman,Paper filters,USD,15.45,paid
+SCS-10041,2025-11-18,Luis Whitlock,Single origin 250 g,USD,28.95,paid
+SCS-10042,2025-11-18,Ines Fischer,Single origin 250 g,USD,28.95,paid
+SCS-10043,2025-11-18,Dev Whitlock,"Brew scale, Hand grinder, House blend 1 kg",USD,227.00,paid
+SCS-10044,2025-11-20,"Hollis and Rowe, Bakers","House blend 1 kg x7, Paper filters x7",USD,451.50,paid
+SCS-10045,2025-11-20,Pier Nine Café,"House blend 1 kg x7, Paper filters x5, Cleaning tablets x2",USD,458.50,paid
+SCS-10046,2025-11-21,Owen Kaur,"Hand grinder, House blend 250 g, Gift set",USD,236.00,paid
+SCS-10047,2025-11-21,Luis Bianchi,"House blend 250 g, Ceramic dripper",USD,52.95,paid
+SCS-10048,2025-11-24,Rosa Iqbal,"Hand grinder, Gooseneck kettle",USD,193.00,paid
+SCS-10049,2025-11-24,Theo O'Brien,House blend 250 g,USD,24.95,paid
+SCS-10050,2025-11-25,Bruno Brennan,Gooseneck kettle,USD,64.00,paid
+SCS-10051,2025-11-27,Aoife Ulloa,Paper filters,USD,15.45,paid
+SCS-10052,2025-11-27,Maya Hale,"Hand grinder, Paper filters",USD,137.50,paid
+SCS-10053,2025-11-27,Carmen Whitlock,"Hand grinder, Paper filters",USD,137.50,paid
+SCS-10054,2025-11-28,Rosa Kaur,Single origin 250 g,USD,28.95,paid
+SCS-10055,2025-11-29,Theo Jensen,"Hand grinder, Brew scale",USD,171.00,paid
+SCS-10056,2025-11-30,Rosa Jensen,Hand grinder,USD,129.00,paid
+SCS-10057,2025-12-05,Marcus Quayle,Travel mug,USD,32.95,paid
+SCS-10058,2025-12-05,Luis Okafor,"Hand grinder, House blend 1 kg, Flat burr grinder",USD,434.00,paid
+SCS-10059,2025-12-07,Wren Moreau,"Single origin 250 g, Cleaning tablets",USD,40.95,paid
+SCS-10060,2025-12-07,José Ulloa,Gift set,USD,89.00,paid
+SCS-10061,2025-12-08,Marcus Santos,House blend 1 kg,USD,62.95,paid
+SCS-10062,2025-12-08,Ines Fischer,"Cold brew jar, Travel mug",USD,60.00,paid
+SCS-10062,2025-12-08,Ines Fischer,"Cold brew jar, Travel mug",USD,60.00,paid
+SCS-10063,2025-12-09,Kira Ekström,Hand grinder,USD,129.00,paid
+SCS-10064,2025-12-09,Dmitri Abbott,"Gift set, Paper filters",USD,97.50,paid
+SCS-10065,2025-12-09,Owen Abbott,Hand grinder,USD,129.00,paid
+SCS-10066,2025-12-10,Aoife Jensen,"Hand grinder, Cleaning tablets",USD,141.00,paid
+SCS-10067,2025-12-10,Esme Ulloa,"Paper filters, Ceramic dripper",USD,43.45,paid
+SCS-10068,2025-12-10,Vince Ibarra,"Hand grinder, House blend 250 g, Flat burr grinder",USD,396.00,paid
+SCS-10069,2025-12-11,Olga Hale,"Flat burr grinder, Gooseneck kettle",USD,313.00,paid
+SCS-10070,2025-12-11,Grace O'Brien,Hand grinder,USD,129.00,paid
+SCS-10071,2025-12-13,Hugo Zielinski,"House blend 250 g x2, Paper filters x2",USD,59.95,paid
+SCS-10072,2025-12-13,Priya Varga,Hand grinder,USD,129.00,paid
+SCS-10073,2025-12-14,Leah Lindqvist,Flat burr grinder,USD,249.00,paid
+SCS-10074,2025-12-15,Owen Castillo,"Flat burr grinder, Hand grinder",USD,378.00,paid
+SCS-10075,2025-12-15,Olga Park,Hand grinder,USD,129.00,paid
+SCS-10076,2025-12-15,Wren Kowalski,Cleaning tablets,USD,18.95,paid
+SCS-10077,2025-12-15,Chloe Abbott,Ceramic dripper,USD,34.95,paid
+SCS-10078,2025-12-16,Hugo Duarte,Gift set,USD,89.00,paid
+SCS-10079,2025-12-16,Luis Whitlock,"House blend 250 g, House blend 1 kg, Hand grinder",USD,203.00,paid
+SCS-10080,2025-12-18,Jonah Cho,"Cold brew jar, House blend 250 g",USD,58.95,paid
+SCS-10081,2025-12-18,Luis Sorensen,Single origin 250 g,USD,28.95,paid
+SCS-10082,2025-12-18,Imani Nakamura,"Single origin 250 g, Paper filters, House blend 250 g",USD,55.45,paid
+SCS-10083,2025-12-19,Pier Nine Café,"House blend 1 kg x4, Paper filters x7, Cleaning tablets x2",USD,307.50,paid
+SCS-10084,2025-12-19,Low Tide Espresso Bar,"House blend 1 kg x6, Paper filters x4",USD,370.00,paid
+SCS-10085,2025-12-19,Ana Okafor,"Paper filters x2, Single origin 250 g x2",USD,61.00,paid
+SCS-10086,2025-12-20,Aoife Castillo,Hand grinder,USD,129.00,paid
+SCS-10087,2025-12-20,Femi Fischer,Single origin 250 g,USD,28.95,paid
+SCS-10088,2025-12-20,Owen Whitlock,Flat burr grinder,USD,249.00,paid
+SCS-10089,2025-12-20,Maya Abbott,"Flat burr grinder, Hand grinder, Gift set",USD,467.00,paid
+SCS-10090,2025-12-24,Grace Ekström,Travel mug,USD,32.95,cancelled
+SCS-10091,2025-12-24,Nadia Tanaka,Hand grinder,USD,129.00,paid
+SCS-10092,2025-12-24,Uma Tanaka,"House blend 250 g x2, Single origin 250 g x2",USD,80.00,paid
+SCS-10093,2025-12-25,Olga Bianchi,"Ceramic dripper, Hand grinder, Flat burr grinder",USD,406.00,paid
+SCS-10094,2025-12-25,Elif Petrov,"Hand grinder, Gift set",USD,218.00,paid
+SCS-10095,2025-12-27,Esme Zielinski,Hand grinder,USD,129.00,paid
+SCS-10096,2025-12-28,Mei Lindqvist,Paper filters,USD,15.45,paid
+SCS-10097,2025-12-29,Quinn Reyes,"House blend 250 g x2, Hand grinder",USD,165.00,paid
+SCS-10098,2025-12-29,Vince Hale,"Brew scale, Cleaning tablets",USD,60.95,paid
+SCS-10099,2025-12-30,Uma Tanaka,Hand grinder,USD,129.00,paid
+SCS-10100,2025-12-30,Carmen Reyes,"Hand grinder, Single origin 250 g",USD,151.00,paid
+SCS-10101,2025-12-30,Wren Fischer,"Hand grinder, Cleaning tablets",USD,141.00,paid
+SCS-10102,2025-12-31,Ben Holm,Hand grinder,USD,129.00,paid
+SCS-10103,2025-12-31,Dmitri Abbott,Hand grinder,USD,129.00,paid
+SCS-10104,2026-01-02,Pier Nine Café,"House blend 1 kg x3, Cleaning tablets x2",USD,192.00,paid
+SCS-10105,2026-01-02,Priya Ulloa,Hand grinder,USD,129.00,paid
+SCS-10106,2026-01-06,Vince Ferreira,"Brew scale, Paper filters",USD,57.45,paid
+SCS-10107,2026-01-07,Esme Achebe,"House blend 250 g x2, Cleaning tablets",USD,54.95,paid
+SCS-10108,2026-01-12,Marcus Whitlock,"Hand grinder, House blend 1 kg, Cleaning tablets x2",USD,209.00,paid
+SCS-10109,2026-01-12,Vince Moreau,Gooseneck kettle,USD,64.00,paid
+SCS-10110,2026-01-14,Uma Kaur,Single origin 250 g,USD,28.95,cancelled
+SCS-10111,2026-01-15,Chloe O'Brien,Gooseneck kettle,USD,64.00,paid
+SCS-10112,2026-01-15,Dev Whitlock,Hand grinder,USD,129.00,paid
+SCS-10113,2026-01-16,Yusuf Castillo,Gooseneck kettle,USD,64.00,paid
+SCS-10114,2026-01-17,Maya Moreau,House blend 1 kg,USD,62.95,paid
+SCS-10115,2026-01-19,Imani Rahman,"Hand grinder, Paper filters",USD,137.50,paid
+SCS-10116,2026-01-20,"Hollis and Rowe, Bakers","House blend 1 kg x4, Paper filters x8, Cleaning tablets x2",USD,316.00,paid
+SCS-10117,2026-01-22,Luis Vogel,House blend 250 g,USD,24.95,paid
+SCS-10118,2026-01-25,Carmen Cho,Brew scale,USD,48.95,paid
+SCS-10119,2026-01-28,Carmen Jensen,"House blend 1 kg, Ceramic dripper",USD,84.00,paid
+SCS-10120,2026-01-28,Imani Sorensen,Ceramic dripper,USD,34.95,paid
+SCS-10121,2026-01-31,Low Tide Espresso Bar,House blend 1 kg x7,USD,392.00,paid
+SCS-10122,2026-01-31,Aoife Cho,Ceramic dripper,USD,34.95,paid
+SCS-10123,2026-02-03,Wren Quayle,Single origin 250 g,USD,28.95,paid
+SCS-10124,2026-02-07,Priya Park,Travel mug,USD,32.95,paid
+SCS-10125,2026-02-08,Kofi Brennan,House blend 250 g,USD,24.95,paid
+SCS-10126,2026-02-30,Priya Santos,Cleaning tablets x2,USD,30.95,paid
+SCS-10127,2026-02-10,José Fischer,"Travel mug, Gooseneck kettle",USD,90.00,paid
+SCS-10128,2026-02-11,Priya Abbott,House blend 1 kg,USD,62.95,paid
+SCS-10129,2026-02-11,Dmitri Novak,"Travel mug, House blend 250 g, Hand grinder",USD,173.00,paid
+SCS-10130,2026-02-13,Nadia Zielinski,Paper filters,USD,15.45,paid
+SCS-10131,2026-02-14,"Hollis and Rowe, Bakers",House blend 1 kg x5,USD,280.00,paid
+SCS-10132,2026-02-15,Uma Lindqvist,Cold brew jar,USD,40.95,paid
+SCS-10133,2026-02-17,Esme Achebe,House blend 1 kg,USD,62.95,paid
+SCS-10134,2026-02-18,Imani Zielinski,Paper filters,USD,15.45,paid
+SCS-10135,2026-02-21,Ana Fischer,"Single origin 250 g x2, House blend 1 kg",USD,100.00,paid
+SCS-10136,2026-02-23,Pier Nine Café,"House blend 1 kg x3, Paper filters x5, Cleaning tablets x2",USD,234.50,paid
+SCS-10137,2026-02-25,Low Tide Espresso Bar,"House blend 1 kg x3, Paper filters x8",USD,236.00,paid
+SCS-10138,2026-02-25,Marcus Sorensen,Cleaning tablets x2,USD,30.95,paid
+SCS-10139,2026-02-26,Ines Cho,Travel mug,USD,32.95,paid
+SCS-10140,2026-02-27,Wren Hale,House blend 250 g x2,USD,42.95,paid
+SCS-10141,2026-03-01,Dmitri Abbott,"Paper filters x2, Cleaning tablets",USD,35.95,paid
+SCS-10142,2026-03-02,Rosa Ibarra,"House blend 250 g, Single origin 250 g, Ceramic dripper",USD,68.00,paid
+SCS-10143,2026-03-02,Chloe Tanaka,"Gooseneck kettle, House blend 250 g, Paper filters x2",USD,99.00,paid
+SCS-10144,2026-03-03,Ines Rahman,"Ceramic dripper, Paper filters",USD,43.45,paid
+SCS-10145,2026-03-06,Niall Tanaka,House blend 250 g,USD,24.95,paid
+SCS-10146,2026-03-07,Marcus Varga,"Paper filters, Travel mug, Flat burr grinder",USD,283.50,paid
+SCS-10147,03/09/2026,Carmen Novak,"Paper filters x2, Gooseneck kettle, Ceramic dripper",USD,109.00,paid
+SCS-10148,2026-03-12,José Quayle,"House blend 1 kg, Ceramic dripper",USD,84.00,paid
+SCS-10149,2026-03-13,Priya Park,"Hand grinder, House blend 250 g",USD,147.00,paid
+SCS-10150,2026-03-14,Pier Nine Café,House blend 1 kg x5,USD,280.00,paid
+SCS-10151,2026-03-14,Leah Vogel,"Single origin 250 g, Travel mug, Paper filters",USD,63.45,paid
+SCS-10152,2026-03-14,Chloe Holm,Ceramic dripper,USD,34.95,paid
+SCS-10153,2026-03-15,"Hollis and Rowe, Bakers","House blend 1 kg x4, Paper filters x6, Cleaning tablets x2",USD,299.00,paid
+SCS-10154,2026-03-16,Marcus Rahman,"House blend 250 g x2, Flat burr grinder, Hand grinder",USD,414.00,paid
+SCS-10155,2026-03-16,Theo Quayle,Paper filters,USD,15.45,paid
+SCS-10156,2026-03-20,Kira Ulloa,Ceramic dripper,USD,34.95,paid
+SCS-10157,2026-03-20,Mei Petrov,Ceramic dripper,USD,34.95,paid
+SCS-10158,2026-03-21,Priya Quayle,"House blend 250 g, Brew scale",USD,60.00,paid
+SCS-10159,2026-03-21,Ana Yamada,Hand grinder,USD,129.00,paid
+SCS-10160,2026-03-22,Wren Varga,Hand grinder,USD,129.00,paid
+SCS-10161,2026-03-24,Low Tide Espresso Bar,"House blend 1 kg x6, Paper filters x8, Cleaning tablets x2",USD,428.00,paid
+SCS-10162,2026-03-29,Grace Delgado,House blend 250 g x2,USD,42.95,paid
+SCS-10163,2026-03-30,Ben Fischer,House blend 250 g,USD,24.95,paid
+SCS-10164,2026-04-01,Esme Vogel,"Single origin 250 g, Travel mug",USD,54.95,paid
+SCS-10165,2026-04-02,Priya Rahman,"Cleaning tablets x2, Cold brew jar",USD,64.95,paid
+SCS-10166,2026-04-03,José Fischer,"Cold brew jar, Brew scale",USD,76.00,paid
+SCS-10167,2026-04-04,Hugo Varga,"Paper filters, Hand grinder",USD,137.50,paid
+SCS-10168,2026-04-04,Kira Castillo,"House blend 250 g, Paper filters x2",USD,41.95,paid
+SCS-10169,2026-04-06,Femi Delgado,"Paper filters, Gooseneck kettle",USD,72.50,paid
+SCS-10170,2026-04-06,Aoife Jensen,Brew scale,USD,48.95,cancelled
+SCS-10171,2026-04-07,José Okafor,Brew scale,USD,48.95,paid
+SCS-10172,2026-04-08,Tariq Achebe,"Ceramic dripper, Hand grinder, Paper filters x2",USD,174.00,paid
+SCS-10173,2026-04-08,Mei Ibarra,"House blend 250 g, Ceramic dripper",USD,52.95,paid
+SCS-10174,2026-04-09,Tariq Jensen,Hand grinder,EUR,129.00,paid
+SCS-10175,2026-04-10,Esme Duarte,"Gooseneck kettle, Cleaning tablets",USD,76.00,paid
+SCS-10176,2026-04-12,Maya Varga,"Flat burr grinder, Ceramic dripper",USD,277.00,paid
+SCS-10177,2026-04-12,Hugo Ekström,"Ceramic dripper, House blend 250 g, Flat burr grinder",USD,295.00,paid
+SCS-10178,2026-04-12,Marcus Holm,Gooseneck kettle,USD,64.00,paid
+SCS-10179,2026-04-13,Low Tide Espresso Bar,"House blend 1 kg x3, Paper filters x9",USD,244.50,paid
+SCS-10180,2026-04-14,Carmen Bianchi,House blend 250 g,USD,24.95,paid
+SCS-10181,2026-04-15,Pier Nine Café,"House blend 1 kg x4, Paper filters x4",USD,258.00,paid
+SCS-10182,2026-04-16,Ana O'Brien,Single origin 250 g,USD,28.95,paid
+SCS-10183,2026-04-18,Elif Petrov,"House blend 250 g, Hand grinder",USD,147.00,paid
+SCS-10184,2026-04-18,Grace Reyes,"Gooseneck kettle, Brew scale",USD,106.00,paid
+SCS-10185,2026-04-18,Wren Jensen,Paper filters,USD,15.45,paid
+SCS-10186,2026-04-26,Wren Moreau,"Gooseneck kettle, Single origin 250 g",USD,86.00,paid
+SCS-10187,2026-04-27,"Hollis and Rowe, Bakers","House blend 1 kg x3, Cleaning tablets x2",USD,192.00,paid
+SCS-10188,2026-04-30,Ines Tanaka,"Cleaning tablets, Travel mug",USD,44.95,paid
+SCS-10189,2026-05-02,Theo Fischer,Travel mug,USD,32.95,paid
+SCS-10190,2026-05-02,Priya Quayle,Paper filters x2,USD,23.95,paid
+SCS-10191,2026-05-04,Dmitri Nakamura,"Gooseneck kettle, House blend 250 g x2, Paper filters",USD,108.50,paid
+SCS-10192,2026-05-06,Chloe Cho,Cleaning tablets,USD,18.95,paid
+SCS-10193,2026-05-13,Low Tide Espresso Bar,"House blend 1 kg x5, Paper filters x4",USD,314.00,paid
+SCS-10194,2026-05-15,Vince Moreau,Gooseneck kettle,USD,64.00,paid
+SCS-10195,2026-05-17,Leah Iqbal,"Hand grinder, House blend 250 g",USD,147.00,paid
+SCS-10196,2026-05-17,Imani Reyes,House blend 1 kg,USD,62.95,paid
+SCS-10197,2026-05-18,Pier Nine Café,House blend 1 kg x6,USD,336.00,paid
+SCS-10198,2026-05-18,Sam Jensen,"Cleaning tablets, Paper filters",USD,27.45,paid
+SCS-10199,2026-05-18,Zoë Petrov,House blend 1 kg,USD,62.95,paid
+SCS-10200,2026-05-19,Siobhán Abbott,"House blend 250 g, Gooseneck kettle",USD,82.00,paid
+SCS-10201,2026-05-19,Marcus Castillo,Single origin 250 g x2,USD,50.95,paid
+SCS-10202,2026-05-19,Jonah Quayle,"Single origin 250 g, Brew scale",USD,64.00,paid
+SCS-10203,2026-05-19,Bruno Yamada,Ceramic dripper,USD,34.95,paid
+SCS-10204,2026-05-22,Sam Kaur,Flat burr grinder,USD,249.00,paid
+SCS-10205,2026-05-23,Dmitri Varga,Single origin 250 g,USD,28.95,paid
+SCS-10206,2026-05-24,Ana Park,Hand grinder,USD,129.00,paid
+SCS-10207,2026-05-24,Femi Ibarra,Flat burr grinder,USD,249.00,paid
+SCS-10208,2026-05-24,Ines Tanaka,Cleaning tablets,USD,18.95,paid
+SCS-10209,2026-05-24,Nadia Park,"House blend 250 g, Travel mug",USD,50.95,paid
+SCS-10210,2026-05-25,Mei Achebe,"Single origin 250 g x2, Brew scale, House blend 250 g",USD,104.00,cancelled
+SCS-10211,2026-05-26,Zoë Mensah,Ceramic dripper,USD,34.95,paid
+SCS-10212,2026-05-29,Sam Mensah,"Single origin 250 g, Gooseneck kettle",USD,86.00,paid
+SCS-10213,2026-05-29,Leah Delgado,"House blend 1 kg, House blend 250 g, Single origin 250 g x2",USD,118.00,paid
+SCS-10214,2026-05-30,"Hollis and Rowe, Bakers","House blend 1 kg x4, Paper filters x8",USD,292.00,paid
+SCS-10215,2026-05-30,Mei Quayle,Ceramic dripper,USD,34.95,paid
+SCS-10216,2026-06-04,Kofi Duarte,"Paper filters, Brew scale",USD,57.45,paid
+SCS-10217,2026-06-04,Priya Park,Gooseneck kettle,USD,64.00,paid
+SCS-10218,2026-06-05,Owen Delgado,Single origin 250 g,USD,28.95,paid
+SCS-10219,2026-06-06,"Hollis and Rowe, Bakers",House blend 1 kg x5,USD,280.00,paid
+SCS-10220,2026-06-07,Femi Reyes,"Brew scale, House blend 1 kg",USD,98.00,paid
+SCS-10221,2026-06-07,Grace Delgado,"Brew scale, House blend 250 g",USD,60.00,paid
+SCS-10222,2026-06-07,Imani Hale,House blend 250 g,USD,24.95,paid
+SCS-10223,2026-06-07,Imani Ferreira,Hand grinder,USD,129.00,paid
+SCS-10224,2026-06-08,Luis Mensah,House blend 1 kg,USD,$62.95,paid
+SCS-10225,2026-06-08,Maya O'Brien,Single origin 250 g,USD,28.95,cancelled
+SCS-10226,2026-06-11,Olga Sorensen,House blend 250 g x2,USD,42.95,paid
+SCS-10227,2026-06-12,Pier Nine Café,House blend 1 kg x6,USD,336.00,paid
+SCS-10228,2026-06-15,Grace Nakamura,Flat burr grinder,USD,249.00,paid
+SCS-10229,2026-06-16,Ana Nakamura,House blend 250 g,USD,24.95,paid
+SCS-10230,2026-06-19,Leah Petrov,"Cleaning tablets, Paper filters",USD,27.45,paid
+SCS-10231,2026-06-23,Owen Castillo,"Cleaning tablets, House blend 250 g, Single origin 250 g x2",USD,74.00,paid
+SCS-10232,2026-06-28,Yusuf Hale,Gooseneck kettle,USD,64.00,cancelled
+SCS-10233,2026-06-28,Olga Castillo,Single origin 250 g,USD,28.95,paid
+SCS-10234,2026-06-28,Bruno Moreau,"Ceramic dripper, House blend 250 g, Paper filters x2",USD,63.00,paid
+SCS-10235,2026-06-29,Aoife Varga,Ceramic dripper,USD,34.95,paid
+SCS-10236,2026-06-29,Dev Nakamura,"Cold brew jar, House blend 250 g x2",USD,70.00,cancelled
+SCS-10237,2026-06-30,Low Tide Espresso Bar,"House blend 1 kg x7, Paper filters x6",USD,443.00,paid
+SCS-10238,2026-07-01,Rosa Whitlock,Single origin 250 g,USD,28.95,paid
+SCS-10239,2026-07-04,Dmitri Nakamura,Brew scale,USD,48.95,paid
+SCS-10240,2026-07-06,Zoë Whitlock,"Gooseneck kettle, Paper filters",USD,72.50,paid
+SCS-10241,2026-07-07,"Hollis and Rowe, Bakers","House blend 1 kg x3, Cleaning tablets x2",USD,192.00,paid
+SCS-10242,2026-07-07,Luis Castillo,Brew scale,USD,48.95,paid
+SCS-10243,2026-07-09,José Ibarra,Brew scale,USD,48.95,paid
+SCS-10244,2026-07-11,Grace Quayle,Paper filters,USD,15.45,paid
+SCS-10245,2026-07-12,Elif Reyes,House blend 250 g,USD,24.95,paid
+SCS-10246,2026-07-12,Carmen Castillo,"House blend 250 g, Flat burr grinder",USD,267.00,paid
+SCS-10247,2026-07-16,Wren Varga,"House blend 250 g x2, Flat burr grinder, Travel mug",USD,311.00,paid
+SCS-10248,2026-07-16,Priya Petrov,Paper filters,USD,15.45,paid
+SCS-10249,2026-07-19,Pier Nine Café,"House blend 1 kg x7, Paper filters x8",USD,460.00,paid
+SCS-10250,2026-07-19,Imani Holm,"Single origin 250 g, Paper filters",USD,37.45,paid
+SCS-10251,2026-07-19,Zoë Whitlock,Paper filters,USD,15.45,paid
+SCS-10252,2026-07-19,Siobhán Kowalski,"House blend 250 g, Travel mug",USD,50.95,paid
+SCS-10253,2026-07-22,Ben Jensen,"Single origin 250 g, House blend 1 kg",USD,78.00,paid
+SCS-10254,2026-07-24,Rosa Varga,Gooseneck kettle,USD,64.00,paid
+SCS-10255,2026-07-29,Sam Petrov,Cold brew jar,USD,40.95,paid
+SCS-10256,2026-07-30,Uma Petrov,Single origin 250 g,USD,28.95,paid
+SCS-10257,2026-07-30,José Nakamura,Cold brew jar,USD,40.95,paid
+SCS-10258,2026-07-31,Low Tide Espresso Bar,"House blend 1 kg x4, Cleaning tablets x2",USD,248.00,paid
+SCS-10259,2026-08-01,Pier Nine Café,House blend 1 kg x4,USD,224.00,paid
+SCS-10260,2026-08-02,Uma Whitlock,"Brew scale, House blend 250 g",USD,60.00,paid
+SCS-10261,2026-08-03,Sam Ekström,Hand grinder,USD,129.00,paid
+SCS-10262,2026-08-09,Low Tide Espresso Bar,"House blend 1 kg x3, Paper filters x8",USD,236.00,paid
+SCS-10263,2026-08-09,Jonah Varga,Single origin 250 g,USD,28.95,paid
+SCS-10264,2026-08-10,"Hollis and Rowe, Bakers","House blend 1 kg x3, Paper filters x5, Cleaning tablets x2",USD,234.50,paid
+SCS-10265,2026-08-11,Jonah Lindqvist,Hand grinder,USD,129.00,cancelled
+SCS-10266,2026-08-14,Ben Castillo,House blend 250 g,USD,24.95,paid
+SCS-10267,2026-08-18,Dmitri Rahman,Travel mug,USD,32.95,paid
+SCS-10268,2026-08-18,Elif Petrov,Hand grinder,USD,129.00,paid
+SCS-10269,2026-08-19,Ana Varga,Paper filters x2,USD,23.95,paid
+SCS-10270,2026-08-19,Elif Petrov,"Cold brew jar, Cleaning tablets x2",USD,64.95,paid
+SCS-10271,2026-08-21,Jonah Park,"Gooseneck kettle, Travel mug, Single origin 250 g x2",USD,134.00,paid
+SCS-10272,2026-08-23,Marcus Brennan,"House blend 250 g, Ceramic dripper",USD,52.95,paid
+SCS-10273,2026-08-23,Vince Castillo,"Single origin 250 g x2, Paper filters",USD,59.45,paid
+SCS-10274,2026-08-24,Aoife Zielinski,"House blend 250 g, Hand grinder",USD,147.00,paid
+SCS-10275,2026-08-24,Dmitri Abbott,"Paper filters, House blend 1 kg, Ceramic dripper",USD,92.50,paid
+SCS-10276,2026-08-26,Ines Kaur,"Ceramic dripper, House blend 1 kg",USD,84.00,paid
+SCS-10277,2026-08-26,Chloe Lindqvist,Brew scale,USD,,paid
+SCS-10278,2026-08-27,Jonah Park,"Flat burr grinder, Ceramic dripper",USD,277.00,paid
+SCS-10279,2026-08-28,Dmitri Abbott,Travel mug,USD,32.95,paid
+SCS-10280,2026-08-31,Luis Fischer,"Paper filters, House blend 250 g x2",USD,51.45,cancelled
+SCS-10281,2026-08-31,Nadia Moreau,Brew scale,USD,48.95,paid
+SCS-10282,2026-09-01,Zoë Yamada,"Ceramic dripper, House blend 250 g, Single origin 250 g",USD,68.00,paid
+SCS-10283,2026-09-02,Dev Ekström,Paper filters,USD,15.45,pending
+SCS-10284,2026-09-02,Jonah Achebe,House blend 250 g,USD,24.95,paid
+SCS-10285,2026-09-03,Zoë Vogel,House blend 250 g,USD,24.95,paid
+SCS-10286,2026-09-05,Rosa Iqbal,Hand grinder,USD,129.00,paid
+SCS-10287,2026-09-06,Ines Yamada,"Travel mug, Paper filters",USD,41.45,cancelled
+SCS-10288,2026-09-06,Vince Holm,"Cleaning tablets, House blend 250 g",USD,36.95,paid
+SCS-10289,2026-09-10,Priya Duarte,Hand grinder,USD,129.00,paid
+SCS-10290,2026-09-10,Dmitri Reyes,Hand grinder,USD,129.00,paid
+SCS-10291,2026-09-12,Luis Iqbal,"House blend 1 kg, Travel mug",USD,82.00,paid
+SCS-10292,2026-09-13,Theo Kowalski,Single origin 250 g x2,USD,50.95,paid
+SCS-10293,2026-09-14,Theo Novak,"Gooseneck kettle, Ceramic dripper",USD,92.00,paid
+SCS-10294,2026-09-15,Pier Nine Café,House blend 1 kg x5,USD,280.00,paid
+SCS-10295,2026-09-17,Bruno Quayle,Ceramic dripper,USD,34.95,paid
+SCS-10296,2026-09-17,Mei Garnier,Hand grinder,USD,129.00,paid
+SCS-10297,2026-09-18,Grace Bianchi,Paper filters x2,USD,23.95,paid
+SCS-10298,2026-09-20,Theo Holm,Brew scale,USD,48.95,paid
+SCS-10299,2026-09-21,Kira Yamada,Gooseneck kettle,USD,64.00,paid
+SCS-10300,2026-09-22,Low Tide Espresso Bar,House blend 1 kg x3,USD,168.00,paid
+SCS-10301,2026-09-23,Priya Duarte,"Ceramic dripper, Paper filters",USD,43.45,paid
+SCS-10302,2026-09-25,Owen Duarte,Ceramic dripper,USD,34.95,pending
+SCS-10303,2026-09-26,"Hollis and Rowe, Bakers","House blend 1 kg x3, Paper filters x8, Cleaning tablets x2",USD,260.00,paid
+SCS-10304,2026-09-26,Kira Delgado,Single origin 250 g,USD,28.95,paid
+SCS-10305,2026-09-27,Owen Kaur,"Paper filters x2, House blend 250 g",USD,41.95,pending
+SCS-10306,2026-09-28,Uma Lindqvist,"Hand grinder, Ceramic dripper",USD,157.00,paid
+SCS-10307,2026-09-28,Vince Garnier,"Single origin 250 g x2, House blend 250 g, Gooseneck kettle",USD,126.00,pending
+SCS-10308,2026-09-30,Mei Duarte,Cleaning tablets x2,USD,30.95,pending
