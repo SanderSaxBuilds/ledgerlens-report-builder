@@ -35,6 +35,11 @@
     let quoteStartLine = null;
     let atFieldStart = true;
     let rowHadSyntax = false;
+    let lineStartIndex = 0;
+
+    function column(index) {
+      return index - lineStartIndex + 1;
+    }
 
     function pushCell() {
       row.push(cell.trim());
@@ -58,7 +63,8 @@
       const character = input[index];
       const next = input[index + 1];
 
-      if (character !== "\r" && character !== "\n") rowHadSyntax = true;
+      // Blank and whitespace-only lines are skipped. Anything else makes the line a row.
+      if (character !== "\r" && character !== "\n" && character !== " " && character !== "\t") rowHadSyntax = true;
 
       if (state === "quoted") {
         if (character === '"' && next === '"') {
@@ -74,6 +80,7 @@
             cell += character;
           }
           line += 1;
+          lineStartIndex = index + 1;
         } else {
           cell += character;
         }
@@ -87,9 +94,10 @@
           pushRow();
           if (character === "\r" && next === "\n") index += 1;
           line += 1;
+          lineStartIndex = index + 1;
           rowStartLine = line;
-        } else {
-          csvError("unexpected character after a closing quote at line " + line + ", column " + (index + 1) + ".");
+        } else if (character !== " " && character !== "\t") {
+          csvError("unexpected character after a closing quote at line " + line + ", column " + column(index) + ".");
         }
         continue;
       }
@@ -100,11 +108,14 @@
         pushRow();
         if (character === "\r" && next === "\n") index += 1;
         line += 1;
+        lineStartIndex = index + 1;
         rowStartLine = line;
       } else if (character === '"') {
-        if (!atFieldStart || cell !== "") {
-          csvError("quote inside an unquoted field at line " + line + ", column " + (index + 1) + ".");
+        if (!atFieldStart) {
+          csvError("quote inside an unquoted field at line " + line + ", column " + column(index) + ".");
         }
+        // Spaces before an opening quote are padding, not part of the value.
+        cell = "";
         state = "quoted";
         quoteStartLine = line;
         atFieldStart = false;
@@ -134,9 +145,12 @@
       csvError("blank header at column " + position + " on line " + rows[0].line + ".");
     }
 
+    // Headers are matched without regard to letter case, so Order_ID and order_id
+    // are the same column. Records use the lowercase key.
+    const keys = headers.map((header) => header.toLocaleLowerCase("en-US"));
     const headerKeys = new Set();
     headers.forEach((header, index) => {
-      const key = header.toLocaleLowerCase("en-US");
+      const key = keys[index];
       if (RESERVED_HEADERS.has(key)) {
         csvError("reserved header " + header + " at column " + (index + 1) + " conflicts with parser metadata or object properties.");
       }
@@ -147,7 +161,7 @@
     });
 
     if (source) {
-      const missing = REQUIRED_HEADERS[source].filter((header) => !headers.includes(header));
+      const missing = REQUIRED_HEADERS[source].filter((header) => !headerKeys.has(header));
       if (missing.length) {
         csvError(source + " is missing required header" + (missing.length === 1 ? " " : "s ") + missing.join(", ") + ".");
       }
@@ -160,8 +174,8 @@
         csvError("row starting at line " + parsedRow.line + " has " + values.length + " fields, expected " + headers.length + ".");
       }
       const record = { _row: parsedRow.line };
-      headers.forEach((header, index) => {
-        record[header] = values[index];
+      keys.forEach((key, index) => {
+        record[key] = values[index];
       });
       records.push(record);
     }
@@ -181,8 +195,17 @@
     return day <= daysInMonth;
   }
 
-  function issue(severity, source, row, code, message) {
-    return { severity, source, row, code, message };
+  // ref is the order or refund ID the issue belongs to, blank when the row has none.
+  function issue(severity, source, row, code, message, ref) {
+    return { severity, source, row, code, message, ref: ref || "" };
+  }
+
+  function nextMonth(month) {
+    const year = Number(month.slice(0, 4));
+    const monthNumber = Number(month.slice(5, 7));
+    const nextYear = monthNumber === 12 ? year + 1 : year;
+    const nextNumber = monthNumber === 12 ? 1 : monthNumber + 1;
+    return String(nextYear).padStart(4, "0") + "-" + String(nextNumber).padStart(2, "0");
   }
 
   function cleanText(value) {
@@ -202,6 +225,13 @@
 
   function dollars(cents) {
     return cents / 100;
+  }
+
+  function formatCents(cents) {
+    const sign = cents < 0 ? "-" : "";
+    const absolute = Math.abs(cents);
+    const whole = String(Math.floor(absolute / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return sign + "$" + whole + "." + String(absolute % 100).padStart(2, "0");
   }
 
   function buildReport(orders, refunds) {
@@ -224,32 +254,34 @@
       const cents = parseAmountCents(order && order.amount);
       let valid = true;
 
+      const label = orderId || "this row";
+      const rawAmount = cleanText(order && order.amount);
       if (!orderId) {
         issues.push(issue("error", "orders", rowNumber, "MISSING_ID", "Order ID is required."));
         valid = false;
       } else if (seenOrderIds.has(orderId)) {
-        issues.push(issue("error", "orders", rowNumber, "DUPLICATE_ORDER", "Duplicate order ID " + orderId + "."));
+        issues.push(issue("error", "orders", rowNumber, "DUPLICATE_ORDER", "Order " + orderId + " appears more than once. The first row was kept.", orderId));
         valid = false;
       }
       if (!isValidDate(orderDate)) {
-        issues.push(issue("error", "orders", rowNumber, "INVALID_DATE", "Invalid order date for " + (orderId || "this row") + "."));
+        issues.push(issue("error", "orders", rowNumber, "INVALID_DATE", "Order " + label + (orderDate ? " has the date \"" + orderDate + "\", which is not a real YYYY-MM-DD date." : " has no date."), orderId));
         valid = false;
       }
       if (!SUPPORTED_CURRENCIES.has(currency)) {
-        issues.push(issue("warning", "orders", rowNumber, "UNSUPPORTED_CURRENCY", (currency || "Blank currency") + " is outside the USD-only demo."));
+        issues.push(issue("warning", "orders", rowNumber, "UNSUPPORTED_CURRENCY", "Order " + label + " is in " + (currency || "a blank currency") + ". Only USD is counted.", orderId));
         valid = false;
       }
       if (status !== "paid") {
-        issues.push(issue("warning", "orders", rowNumber, "INELIGIBLE_STATUS", "Order status " + (status || "blank") + " is not paid, so the row is excluded."));
+        issues.push(issue("warning", "orders", rowNumber, "INELIGIBLE_STATUS", "Order " + label + " is " + (status || "missing a status") + ", so it is not counted as revenue yet.", orderId));
         valid = false;
       }
       if (cents === null || cents <= 0) {
-        issues.push(issue("error", "orders", rowNumber, "INVALID_AMOUNT", "Order amount must be a positive decimal with no more than two fractional digits for " + (orderId || "this row") + "."));
+        issues.push(issue("error", "orders", rowNumber, "INVALID_AMOUNT", "Order " + label + (rawAmount ? " has the amount \"" + rawAmount + "\"" : " has no amount") + ". Use a positive number with up to two decimals, such as 64.00.", orderId));
         valid = false;
       }
       if (orderId) seenOrderIds.add(orderId);
       if (valid && grossCents > MAX_SAFE_CENTS - cents) {
-        issues.push(issue("error", "orders", rowNumber, "UNSAFE_TOTAL", "Accepting this order would exceed the safe total amount limit."));
+        issues.push(issue("error", "orders", rowNumber, "UNSAFE_TOTAL", "Accepting this order would exceed the safe total amount limit.", orderId));
         valid = false;
       }
       if (valid) {
@@ -283,47 +315,56 @@
       let valid = true;
       const order = orderById.get(orderId);
 
+      const label = refundId || "on this row";
+      const ref = refundId || orderId;
+      const rawAmount = cleanText(refund && refund.amount);
       if (!refundId || !orderId) {
-        issues.push(issue("error", "refunds", rowNumber, "MISSING_ID", "Refund ID and order ID are required."));
+        issues.push(issue("error", "refunds", rowNumber, "MISSING_ID", "Refund ID and order ID are required.", ref));
         valid = false;
       }
       if (refundId && seenRefundIds.has(refundId)) {
-        issues.push(issue("error", "refunds", rowNumber, "DUPLICATE_REFUND", "Duplicate refund ID " + refundId + "."));
+        issues.push(issue("error", "refunds", rowNumber, "DUPLICATE_REFUND", "Refund " + refundId + " appears more than once. The first row was kept.", ref));
         valid = false;
       }
       if (refundId) seenRefundIds.add(refundId);
       if (!isValidDate(refundDate)) {
-        issues.push(issue("error", "refunds", rowNumber, "INVALID_DATE", "Invalid refund date for " + (refundId || "this row") + "."));
+        issues.push(issue("error", "refunds", rowNumber, "INVALID_DATE", "Refund " + label + (refundDate ? " has the date \"" + refundDate + "\", which is not a real YYYY-MM-DD date." : " has no date."), ref));
         valid = false;
       }
-      if (!SUPPORTED_CURRENCIES.has(currency)) {
-        issues.push(issue("warning", "refunds", rowNumber, "UNSUPPORTED_CURRENCY", (currency || "Blank currency") + " is outside the USD-only demo."));
+      const currencySupported = SUPPORTED_CURRENCIES.has(currency);
+      if (!currencySupported) {
+        issues.push(issue("warning", "refunds", rowNumber, "UNSUPPORTED_CURRENCY", "Refund " + label + " is in " + (currency || "a blank currency") + ". Only USD is counted.", ref));
         valid = false;
       }
       if (cents === null || cents <= 0) {
-        issues.push(issue("error", "refunds", rowNumber, "INVALID_AMOUNT", "Refund amount must be a positive decimal with no more than two fractional digits for " + (refundId || "this row") + "."));
+        issues.push(issue("error", "refunds", rowNumber, "INVALID_AMOUNT", "Refund " + label + (rawAmount ? " has the amount \"" + rawAmount + "\"" : " has no amount") + ". Use a positive number with up to two decimals, such as 18.00.", ref));
         valid = false;
       }
       if (!order) {
-        issues.push(issue("error", "refunds", rowNumber, "UNMATCHED_REFUND", "No valid order matches " + (orderId || "this refund") + "."));
+        if (orderId && seenOrderIds.has(orderId)) {
+          issues.push(issue("warning", "refunds", rowNumber, "REFUND_FOR_EXCLUDED_ORDER", "Refund " + label + " belongs to order " + orderId + ", which was excluded, so the refund is excluded too.", ref));
+        } else {
+          issues.push(issue("error", "refunds", rowNumber, "UNMATCHED_REFUND", "Refund " + label + " points to order " + (orderId || "with a blank ID") + ", which is not in the orders file.", ref));
+        }
         valid = false;
       } else {
-        if (currency !== order.currency) {
-          issues.push(issue("error", "refunds", rowNumber, "CURRENCY_MISMATCH", "Refund currency does not match order " + orderId + "."));
+        // Only compare currencies the report supports. An unsupported currency is already reported once above.
+        if (currencySupported && currency !== order.currency) {
+          issues.push(issue("error", "refunds", rowNumber, "CURRENCY_MISMATCH", "Refund " + label + " is in " + currency + " but order " + orderId + " is in " + order.currency + ".", ref));
           valid = false;
         }
         if (isValidDate(refundDate) && refundDate < order.order_date) {
-          issues.push(issue("error", "refunds", rowNumber, "REFUND_BEFORE_ORDER", "Refund " + (refundId || "on this row") + " predates order " + orderId + "."));
+          issues.push(issue("error", "refunds", rowNumber, "REFUND_BEFORE_ORDER", "Refund " + label + " is dated " + refundDate + ", before order " + orderId + " on " + order.order_date + ".", ref));
           valid = false;
         }
         const alreadyRefunded = refundedByOrder.get(orderId) || 0;
         if (cents !== null && cents > order._amountCents - alreadyRefunded) {
-          issues.push(issue("error", "refunds", rowNumber, "OVER_REFUND", (refundId || "This refund") + " exceeds order " + orderId + "."));
+          issues.push(issue("error", "refunds", rowNumber, "OVER_REFUND", "Refund " + label + " is " + formatCents(cents) + ", but only " + formatCents(order._amountCents - alreadyRefunded) + " of order " + orderId + " is left to refund.", ref));
           valid = false;
         }
       }
       if (valid && refundedCents > MAX_SAFE_CENTS - cents) {
-        issues.push(issue("error", "refunds", rowNumber, "UNSAFE_TOTAL", "Accepting this refund would exceed the safe total amount limit."));
+        issues.push(issue("error", "refunds", rowNumber, "UNSAFE_TOTAL", "Accepting this refund would exceed the safe total amount limit.", ref));
         valid = false;
       }
       if (valid) {
@@ -359,6 +400,13 @@
       getMonth(refund.refund_date.slice(0, 7)).refundedCents += refund._amountCents;
     });
 
+    // Fill months with no accepted activity so the trend never skips a month.
+    const knownMonths = Array.from(byMonthMap.keys()).sort();
+    if (knownMonths.length) {
+      const last = knownMonths[knownMonths.length - 1];
+      for (let month = knownMonths[0]; month < last; month = nextMonth(month)) getMonth(month);
+    }
+
     const byMonth = Array.from(byMonthMap.values())
       .sort((left, right) => left.month.localeCompare(right.month))
       .map((month) => ({
@@ -381,7 +429,7 @@
         grossRevenue: dollars(grossCents),
         netRevenue: dollars(netCents),
         orderCount,
-        averageOrderValue: orderCount ? dollars(grossCents / orderCount) : 0,
+        averageOrderValue: orderCount ? dollars(Math.round(grossCents / orderCount)) : 0,
         refundRate: grossCents ? (refundedCents / grossCents) * 100 : 0,
         refunded: dollars(refundedCents)
       },

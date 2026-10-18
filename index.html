@@ -1,48 +1,239 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LedgerLens | CSV revenue workspace</title>
-<meta name="description" content="Independent CSV reporting demonstration. Validate source rows, reconcile refunds and export an auditable revenue report in your browser.">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LedgerLens | Revenue you can trace back to the row</title>
+<meta name="description" content="Load order and refund CSV exports and get a revenue report reconciled to the cent, with a monthly trend and every excluded row explained. Runs in your browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="style.css">
-<script src="logic.js" defer></script><script src="app.js" defer></script>
+<script src="logic.js" defer></script>
+<script src="app.js" defer></script>
 </head>
 <body>
-<a class="skip-link" href="#workspace">Skip to report</a>
-<div class="demo-banner">Independent software demonstration by Alexandr Khrustalev. Bundled data is fictional.</div>
-<header class="topbar"><a href="./" class="brand" aria-label="LedgerLens home"><span class="brand-icon" aria-hidden="true">L</span><strong>LedgerLens</strong><span class="brand-tag">Revenue workspace</span></a><span class="local-label"><span aria-hidden="true">●</span> Files processed locally</span></header>
-<div class="app-shell">
-<aside class="source-panel" aria-labelledby="sources-title">
-<p class="eyebrow">01 / SOURCE FILES</p><h2 id="sources-title">Start with the evidence.</h2><p class="subtle">Import USD order and refund exports. Invalid rows stay visible and are excluded from revenue totals.</p>
-<div class="upload-card"><label for="orders-file">Orders CSV <span>Required</span></label><input type="file" id="orders-file" accept=".csv,text/csv"><p id="orders-name" class="file-name">No file loaded</p><details><summary>Required columns</summary><code>order_id, order_date, currency, amount, status</code><p>Customer is optional. Dates: YYYY-MM-DD. Currency: USD. Amount: positive decimal, at most two decimal places. Only paid orders contribute to totals.</p></details></div>
-<div class="upload-card"><label for="refunds-file">Refunds CSV <span>Required</span></label><input type="file" id="refunds-file" accept=".csv,text/csv"><p id="refunds-name" class="file-name">No file loaded</p><details><summary>Required columns</summary><code>refund_id, order_id, refund_date, currency, amount</code><p>Reason is optional. Use a header-only file when no refunds exist. Refunds must reference an accepted order and cannot exceed that order's total.</p></details></div>
-<button id="run-report" class="button primary">Generate report <span aria-hidden="true">↗</span></button><button id="load-samples" class="button secondary">Restore sample data</button>
-<div class="sample-links"><a href="orders.csv" download>Orders sample ↓</a><a href="refunds.csv" download>Refunds sample ↓</a></div>
-<div class="guardrail"><strong>Clear boundaries</strong><p>USD-only reporting. No currency conversion, bank connection or cloud storage. Files up to 5 MB each. This demonstration is not an accounting system.</p></div>
-</aside>
-<main id="workspace" class="workspace">
-<div class="page-heading"><div><p class="eyebrow">02 / RECONCILE & REVIEW</p><h1>Your numbers, with a trail.</h1><p class="subtle">See what counts, what was excluded and why.</p></div><span id="report-state" class="state-pill">Loading sample</span></div>
-<div id="notice" role="status" aria-live="polite" class="notice">Loading bundled fictional CSV files.</div>
-<section id="empty-state" class="empty-state"><h2>Load both files to build a report.</h2><p>The source schema is listed beside each import. Nothing is sent to a server.</p></section>
-<div id="report" hidden>
-<div class="report-meta"><p id="quality-summary"></p><p>Generated <time id="generated"></time></p></div>
-<section class="metrics" aria-label="Revenue summary">
-<article class="metric"><p>Gross revenue</p><strong id="gross">$0.00</strong><small>Accepted paid orders</small></article>
-<article class="metric accent"><p>Net revenue</p><strong id="net">$0.00</strong><small>Gross less accepted refunds</small></article>
-<article class="metric"><p>Accepted orders</p><strong id="orders">0</strong><small>Unique paid order IDs</small></article>
-<article class="metric"><p>Average order</p><strong id="aov">$0.00</strong><small>Gross divided by order count</small></article>
-<article class="metric"><p>Refund share</p><strong id="refund-rate">0%</strong><small>Refunded amount / gross</small></article>
-</section>
-<nav class="tabs" aria-label="Report sections"><button data-tab="summary" aria-pressed="true">Overview</button><button data-tab="issues" aria-pressed="false">Exceptions <span id="issue-total" class="count">0</span></button><button data-tab="records" aria-pressed="false">Accepted rows</button></nav>
-<section id="panel-summary" class="tab-panel" aria-labelledby="summary-title">
-<div class="panel-heading"><div><p class="eyebrow">TREND / USD</p><h2 id="summary-title">Revenue by calendar month</h2></div><div class="legend"><span><i class="gross-dot"></i> Gross</span><span><i class="net-dot"></i> Net</span></div></div>
-<div id="monthly-chart" class="chart" aria-label="Monthly gross and net revenue"></div><p class="chart-note">Orders are grouped by order date, refunds by refund date. A refund-only month can have negative net revenue.</p>
-<div class="table-scroll" role="region" tabindex="0" aria-label="Monthly revenue table. On narrow screens, scroll horizontally to view all columns."><table><caption class="sr-only">Monthly revenue values</caption><thead><tr><th scope="col">Month</th><th scope="col">Orders</th><th scope="col" class="numeric">Gross</th><th scope="col" class="numeric">Refunded</th><th scope="col" class="numeric">Net</th></tr></thead><tbody id="month-body"></tbody></table></div>
-<div class="reconciliation"><div><span>Gross</span><strong id="recon-gross"></strong></div><span aria-hidden="true">−</span><div><span>Accepted refunds</span><strong id="recon-refunds"></strong></div><span aria-hidden="true">=</span><div><span>Net</span><strong id="recon-net"></strong></div></div>
-</section>
-<section id="panel-issues" class="tab-panel" hidden aria-labelledby="issues-title"><div class="panel-heading"><div><p class="eyebrow">DATA QUALITY</p><h2 id="issues-title">Every exclusion explained.</h2></div><div class="filters" role="group" aria-label="Exception severity"><button data-filter="all" aria-pressed="true">All</button><button data-filter="error" aria-pressed="false">Errors</button><button data-filter="warning" aria-pressed="false">Warnings</button></div></div><label class="search-label" for="issue-search">Search exceptions</label><input id="issue-search" type="search" placeholder="Search source, code or explanation"><p id="issue-count" class="subtle"></p><div class="table-scroll" role="region" tabindex="0" aria-label="Exceptions table. On narrow screens, scroll horizontally to view all columns."><table><caption class="sr-only">Excluded and flagged source rows</caption><thead><tr><th scope="col">Level</th><th scope="col">Source</th><th scope="col">Row</th><th scope="col">Code</th><th scope="col">Explanation</th></tr></thead><tbody id="issue-body"></tbody></table></div><p class="chart-note">Row numbers point to the physical CSV line where each record starts, including multiline records. Warnings do not automatically mean an excluded row.</p></section>
-<section id="panel-records" class="tab-panel" hidden aria-labelledby="records-title"><div class="panel-heading"><div><p class="eyebrow">TRACEABILITY</p><h2 id="records-title">The rows behind the totals.</h2></div><div class="filters" role="group" aria-label="Accepted source"><button data-record="orders" aria-pressed="true">Orders</button><button data-record="refunds" aria-pressed="false">Refunds</button></div></div><p id="records-summary" class="subtle"></p><div class="table-scroll" role="region" tabindex="0" aria-label="Accepted source records table. On narrow screens, scroll horizontally to view all columns."><table><caption id="records-caption" class="sr-only">Accepted source records</caption><thead id="records-head"></thead><tbody id="records-body"></tbody></table></div></section>
-<section class="export-panel" aria-labelledby="export-title"><div><h2 id="export-title">Keep the audit trail.</h2><p class="subtle">Exports reflect the last successful report. Regenerate after changing sources.</p></div><div class="exports"><button id="export-json" class="button secondary">Report JSON ↓</button><button id="export-csv" class="button secondary">Exceptions CSV ↓</button><button id="print-report" class="button secondary">Print / PDF</button></div></section>
-</div>
-<footer class="workspace-footer">LedgerLens / Independent reporting demo <span>Plain CSV in, traceable report out.</span></footer>
-</main></div></body></html>
+<a class="skip-link" href="#report-start">Skip to the report</a>
+
+<header class="masthead">
+  <div class="wrap masthead-bar">
+    <a href="./" class="brand" aria-label="LedgerLens home">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="9" fill="#d9a441"/><path d="M10 8v16h12" fill="none" stroke="#0e3b2b" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="12" r="3.4" fill="none" stroke="#0e3b2b" stroke-width="2.6"/></svg>
+      <span>LedgerLens</span>
+    </a>
+    <p class="masthead-note">Runs in your browser</p>
+  </div>
+
+  <div class="wrap hero">
+    <div class="hero-copy">
+      <p class="kicker">Revenue reports from order and refund exports</p>
+      <h1>Revenue you can trace back to the row.</h1>
+      <p class="lede">Load your order and refund CSV files. LedgerLens totals them to the cent, charts every month and lists each row it left out, with the fix.</p>
+      <p class="dataset" id="dataset-line">Loading the sample store.</p>
+    </div>
+
+    <section class="import" id="import" aria-labelledby="import-title">
+      <div class="import-head">
+        <h2 id="import-title">Your files</h2>
+        <button type="button" id="import-toggle" class="link-button import-toggle" aria-expanded="true" aria-controls="import-body">Hide</button>
+      </div>
+      <p class="import-summary" id="import-summary">No files loaded yet.</p>
+      <div class="import-body" id="import-body">
+        <div class="drop is-empty" id="drop-orders" data-drop="orders">
+          <input type="file" id="orders-file" class="file-input" accept=".csv,text/csv">
+          <label for="orders-file" class="drop-label">
+            <span class="drop-title">Orders CSV</span>
+            <span class="drop-file" id="orders-name">No file loaded</span>
+            <span class="drop-hint">Choose a file or drop it here</span>
+          </label>
+        </div>
+        <div class="drop is-empty" id="drop-refunds" data-drop="refunds">
+          <input type="file" id="refunds-file" class="file-input" accept=".csv,text/csv">
+          <label for="refunds-file" class="drop-label">
+            <span class="drop-title">Refunds CSV</span>
+            <span class="drop-file" id="refunds-name">No file loaded</span>
+            <span class="drop-hint">Choose a file or drop it here</span>
+          </label>
+        </div>
+        <div class="import-actions">
+          <button type="button" id="run-report" class="button primary">Build report</button>
+          <button type="button" id="load-samples" class="button ghost">Use sample data</button>
+        </div>
+        <details class="columns-help">
+          <summary>Which columns do I need?</summary>
+          <div class="columns-body">
+            <p><strong>Orders</strong> need <code>order_id, order_date, currency, amount, status</code>. Customer and items are optional. Only paid orders count as revenue.</p>
+            <p><strong>Refunds</strong> need <code>refund_id, order_id, refund_date, currency, amount</code>. Reason is optional. If there were no refunds, load a file with just the header row.</p>
+            <p>Dates use YYYY-MM-DD, amounts are plain numbers such as 62.95, and the currency is USD. Each file can be up to 5 MB and 100,000 rows.</p>
+            <p class="sample-links">Sample files: <a href="orders.csv" download>orders.csv</a> and <a href="refunds.csv" download>refunds.csv</a></p>
+          </div>
+        </details>
+      </div>
+    </section>
+  </div>
+</header>
+
+<main id="report-start" class="wrap main" tabindex="-1">
+  <div class="status-row">
+    <span id="report-state" class="state-pill is-busy">Loading sample</span>
+    <p id="notice" role="status" aria-live="polite" class="notice">Loading the sample files.</p>
+  </div>
+
+  <section id="empty-state" class="empty-state" aria-labelledby="empty-title">
+    <h2 id="empty-title">Load both files to build a report.</h2>
+    <p>Pick an orders file and a refunds file above, then choose Build report. Nothing is uploaded anywhere.</p>
+  </section>
+
+  <div id="report" hidden>
+    <p class="print-stale">These figures are out of date. The source files changed after this report was built.</p>
+    <div class="report-head">
+      <h2 class="report-title" id="report-title">Report</h2>
+      <p class="report-meta">Built <time id="generated"></time></p>
+    </div>
+
+    <section class="kpis" aria-label="Totals for the period">
+      <article class="kpi kpi-lead">
+        <h3>Net revenue</h3>
+        <p class="kpi-value" id="net">$0.00</p>
+        <p class="kpi-change" id="delta-net"></p>
+      </article>
+      <article class="kpi">
+        <h3>Gross sales</h3>
+        <p class="kpi-value" id="gross">$0.00</p>
+        <p class="kpi-change" id="delta-gross"></p>
+      </article>
+      <article class="kpi">
+        <h3>Refunds</h3>
+        <p class="kpi-value" id="refunded">$0.00</p>
+        <p class="kpi-change" id="delta-refunded"></p>
+      </article>
+      <article class="kpi">
+        <h3>Paid orders</h3>
+        <p class="kpi-value" id="orders">0</p>
+        <p class="kpi-change" id="delta-orders"></p>
+      </article>
+      <article class="kpi">
+        <h3>Average order</h3>
+        <p class="kpi-value" id="aov">$0.00</p>
+        <p class="kpi-change" id="delta-aov"></p>
+      </article>
+    </section>
+
+    <div class="tabs" role="tablist" aria-label="Report views">
+      <button type="button" role="tab" id="tab-summary" data-tab="summary" aria-selected="true" aria-controls="panel-summary">Monthly trend</button>
+      <button type="button" role="tab" id="tab-issues" data-tab="issues" aria-selected="false" aria-controls="panel-issues" tabindex="-1">Exceptions <span id="issue-total" class="count">0</span></button>
+      <button type="button" role="tab" id="tab-records" data-tab="records" aria-selected="false" aria-controls="panel-records" tabindex="-1">Accepted rows</button>
+    </div>
+
+    <section id="panel-summary" class="panel" role="tabpanel" aria-labelledby="tab-summary">
+      <div class="panel-head">
+        <div>
+          <h2 id="summary-title">Month by month</h2>
+          <p class="panel-sub">Orders count in the month they were placed, refunds in the month they were paid out.</p>
+        </div>
+        <ul class="legend" aria-label="Chart key">
+          <li><i class="key key-gross" aria-hidden="true"></i>Gross sales</li>
+          <li><i class="key key-refund" aria-hidden="true"></i>Refunds</li>
+          <li><i class="key key-net" aria-hidden="true"></i>Net revenue</li>
+        </ul>
+      </div>
+      <div class="chart-wrap">
+        <div id="monthly-chart" class="chart" tabindex="0" role="group" aria-roledescription="chart" aria-label="Monthly gross sales, refunds and net revenue" aria-describedby="chart-help"></div>
+        <div id="chart-tip" class="chart-tip" hidden></div>
+      </div>
+      <p class="chart-help" id="chart-help">Hover or tap a month for its figures. With the keyboard, focus the chart and use the arrow keys.</p>
+      <p class="sr-only" id="chart-live" aria-live="polite"></p>
+
+      <div class="table-scroll" role="region" tabindex="0" aria-labelledby="month-caption">
+        <table class="data-table">
+          <caption id="month-caption">Monthly figures</caption>
+          <thead><tr><th scope="col">Month</th><th scope="col" class="numeric">Orders</th><th scope="col" class="numeric">Gross</th><th scope="col" class="numeric">Refunds</th><th scope="col" class="numeric">Net</th><th scope="col" class="numeric">Net change</th></tr></thead>
+          <tbody id="month-body"></tbody>
+        </table>
+      </div>
+
+      <div class="reconcile" aria-label="Reconciliation">
+        <div><span>Gross sales</span><strong id="recon-gross"></strong></div>
+        <span class="op" aria-hidden="true">−</span>
+        <div><span>Refunds</span><strong id="recon-refunds"></strong></div>
+        <span class="op" aria-hidden="true">=</span>
+        <div><span>Net revenue</span><strong id="recon-net"></strong></div>
+      </div>
+    </section>
+
+    <section id="panel-issues" class="panel" role="tabpanel" aria-labelledby="tab-issues" hidden>
+      <div class="panel-head">
+        <div>
+          <h2 id="issues-title">Rows set aside</h2>
+          <p class="panel-sub" id="issues-sub"></p>
+        </div>
+      </div>
+      <div id="issue-groups" class="issue-groups"></div>
+
+      <div class="issue-table-head" id="issue-table">
+        <h3 id="issue-table-title">Every exception</h3>
+        <div class="filters" role="group" aria-label="Show exceptions">
+          <button type="button" data-filter="all" aria-pressed="true">All</button>
+          <button type="button" data-filter="error" aria-pressed="false">Needs a fix</button>
+          <button type="button" data-filter="warning" aria-pressed="false">Check</button>
+        </div>
+      </div>
+      <div class="search-row">
+        <label class="field-label" for="issue-search">Search exceptions</label>
+        <input id="issue-search" type="search" placeholder="Order ID, refund ID or problem" autocomplete="off">
+      </div>
+      <p class="code-filter" id="code-filter" hidden><span id="code-filter-text"></span> <button type="button" id="code-filter-clear" class="link-button">Show all problems</button></p>
+      <p id="issue-count" class="table-note"></p>
+      <div class="table-scroll" role="region" tabindex="0" aria-labelledby="issue-caption">
+        <table class="data-table">
+          <caption id="issue-caption" class="sr-only">Exceptions</caption>
+          <thead><tr><th scope="col">Status</th><th scope="col">File</th><th scope="col" class="numeric">Line</th><th scope="col">ID</th><th scope="col">What happened</th></tr></thead>
+          <tbody id="issue-body"></tbody>
+        </table>
+      </div>
+      <p class="table-note">Line numbers match the line in your CSV file, counting the header as line 1.</p>
+    </section>
+
+    <section id="panel-records" class="panel" role="tabpanel" aria-labelledby="tab-records" hidden>
+      <div class="panel-head">
+        <div>
+          <h2 id="records-title">The rows behind the totals</h2>
+          <p class="panel-sub">Every row counted in the report. The JSON export includes all of them.</p>
+        </div>
+        <div class="filters" role="group" aria-label="Show accepted">
+          <button type="button" data-record="orders" aria-pressed="true">Orders</button>
+          <button type="button" data-record="refunds" aria-pressed="false">Refunds</button>
+        </div>
+      </div>
+      <p id="records-summary" class="table-note"></p>
+      <div class="table-scroll" role="region" tabindex="0" aria-labelledby="records-caption">
+        <table class="data-table">
+          <caption id="records-caption" class="sr-only">Accepted rows</caption>
+          <thead id="records-head"></thead>
+          <tbody id="records-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="export" aria-labelledby="export-title">
+      <div>
+        <h2 id="export-title">Take the report with you</h2>
+        <p>Exports use the last report you built. Build it again after changing a file.</p>
+      </div>
+      <div class="export-actions">
+        <button type="button" id="export-json" class="button secondary">Download report JSON</button>
+        <button type="button" id="export-csv" class="button secondary">Download exceptions CSV</button>
+        <button type="button" id="print-report" class="button secondary">Print or save PDF</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p><strong>LedgerLens</strong> by Alexandr Khrustalev</p>
+    <p>Sample data is fictional. Files you load stay in your browser.</p>
+  </div>
+</footer>
+</body>
+</html>

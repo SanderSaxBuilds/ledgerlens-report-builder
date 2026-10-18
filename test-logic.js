@@ -3,28 +3,57 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { parseCsv, buildReport, exportIssuesCsv } = require("./logic.js");
 
-const originalRoot = __dirname;
-const originalOrders = fs.readFileSync(path.join(originalRoot, "orders.csv"), "utf8");
-const originalRefunds = fs.readFileSync(path.join(originalRoot, "refunds.csv"), "utf8");
+(async () => {
+const root = __dirname;
+const sampleOrders = fs.readFileSync(path.join(root, "orders.csv"), "utf8");
+const sampleRefunds = fs.readFileSync(path.join(root, "refunds.csv"), "utf8");
+
+// The bundled sample must be exactly what the seeded generator writes.
+const { makeSample } = await import("./tools/make-sample.mjs");
+const sample = makeSample();
+assert.equal(sampleOrders, sample.ordersCsv, "orders.csv is out of date. Run node tools/make-sample.mjs");
+assert.equal(sampleRefunds, sample.refundsCsv, "refunds.csv is out of date. Run node tools/make-sample.mjs");
+const truth = sample.truth;
 
 const baseline = buildReport(
-  parseCsv(originalOrders, { source: "orders" }),
-  parseCsv(originalRefunds, { source: "refunds" })
+  parseCsv(sampleOrders, { source: "orders" }),
+  parseCsv(sampleRefunds, { source: "refunds" })
 );
-assert.deepEqual(baseline.metrics, {
-  grossRevenue: 7235,
-  netRevenue: 6535,
-  orderCount: 6,
-  averageOrderValue: 1205.8333333333333,
-  refundRate: (700 / 7235) * 100,
-  refunded: 700
-});
-assert.deepEqual(baseline.accepted, { orders: 6, refunds: 2 });
-assert.deepEqual(baseline.sourceRows, { orders: 10, refunds: 5 });
-assert.equal(baseline.issues.length, 7);
-assert.equal(baseline.records.orders.length, 6);
-assert.equal(baseline.records.refunds.length, 2);
-assert.ok(baseline.byMonth.every((entry) => /^\d{4}-\d{2}$/.test(entry.month)));
+const toCents = (value) => Math.round(value * 100);
+
+// Compare the report with the generator's ground truth, which never touches logic.js.
+assert.equal(toCents(baseline.metrics.grossRevenue), truth.grossCents);
+assert.equal(toCents(baseline.metrics.refunded), truth.refundedCents);
+assert.equal(toCents(baseline.metrics.netRevenue), truth.grossCents - truth.refundedCents);
+assert.equal(baseline.metrics.orderCount, truth.acceptedOrders);
+assert.equal(toCents(baseline.metrics.averageOrderValue), Math.round(truth.grossCents / truth.acceptedOrders));
+assert.deepEqual(baseline.accepted, { orders: truth.acceptedOrders, refunds: truth.acceptedRefunds });
+assert.deepEqual(baseline.sourceRows, truth.sourceRows);
+assert.deepEqual(
+  baseline.byMonth.map((m) => [m.month, toCents(m.grossRevenue), toCents(m.refunded), toCents(m.netRevenue), m.orderCount]),
+  Object.entries(truth.byMonth).map(([month, m]) => [month, m.grossCents, m.refundedCents, m.grossCents - m.refundedCents, m.orderCount])
+);
+const issueCounts = {};
+for (const { code } of baseline.issues) issueCounts[code] = (issueCounts[code] || 0) + 1;
+assert.deepEqual(issueCounts, truth.issueCounts);
+
+// Shape of the sample, as promised in the README.
+assert.equal(baseline.byMonth.length, 12, "sample covers twelve consecutive months");
+assert.equal(baseline.byMonth[0].month, "2025-10");
+assert.equal(baseline.byMonth[11].month, "2026-09");
+assert.ok(truth.problemCount >= 8 && truth.problemCount <= 15, "sample has 8 to 15 planted data problems");
+assert.ok(baseline.sourceRows.orders >= 250 && baseline.sourceRows.orders <= 400);
+const refundShare = baseline.accepted.refunds / baseline.accepted.orders;
+assert.ok(refundShare >= 0.06 && refundShare <= 0.1, "roughly 6 to 10 percent of orders are refunded");
+const december = baseline.byMonth.find((m) => m.month === "2025-12").grossRevenue;
+const february = baseline.byMonth.find((m) => m.month === "2026-02").grossRevenue;
+assert.ok(december > february * 2, "gift season shows in the trend");
+
+// Headline figures quoted in the README. Changing the sample means updating both.
+assert.deepEqual(
+  { gross: baseline.metrics.grossRevenue, refunded: baseline.metrics.refunded, net: baseline.metrics.netRevenue, orders: baseline.metrics.orderCount, refunds: baseline.accepted.refunds, issues: baseline.issues.length },
+  { gross: 32663.05, refunded: 1278.9, net: 31384.15, orders: 288, refunds: 23, issues: 27 }
+);
 
 const cleanOrders = parseCsv([
   "order_id,order_date,currency,amount,status",
@@ -41,7 +70,7 @@ assert.deepEqual(clean.metrics, {
   grossRevenue: 1.55,
   netRevenue: 1.25,
   orderCount: 2,
-  averageOrderValue: 0.775,
+  averageOrderValue: 0.78,
   refundRate: (0.3 / 1.55) * 100,
   refunded: 0.3
 });
@@ -180,10 +209,10 @@ const timingAndCurrency = buildReport(
     "CURRENCY,O1,2026-02-11,EUR,0.25"
   ].join("\n"), { source: "refunds" })
 );
+// A EUR refund is reported once as an unsupported currency, not also as a mismatch.
 assert.deepEqual(new Set(timingAndCurrency.issues.map(({ code }) => code)), new Set([
   "REFUND_BEFORE_ORDER",
-  "UNSUPPORTED_CURRENCY",
-  "CURRENCY_MISMATCH"
+  "UNSUPPORTED_CURRENCY"
 ]));
 assert.equal(timingAndCurrency.accepted.refunds, 0);
 
@@ -197,11 +226,12 @@ assert.ok(safeCsv.includes('"\'+cmd"'));
 assert.ok(safeCsv.includes('"plain, text"'));
 assert.equal(exportIssuesCsv([]), '"severity","source","row","code","message"');
 
-console.log("LedgerLens v2 verified", JSON.stringify({
+console.log("LedgerLens logic verified", JSON.stringify({
   result: "passed",
-  originalSample: baseline.metrics,
+  sample: baseline.metrics,
   accepted: baseline.accepted,
-  originalIssues: baseline.issues.length,
-  cleanRows: { orders: clean.accepted.orders, refunds: clean.accepted.refunds },
-  byMonthEntries: clean.byMonth.length
+  sampleIssues: baseline.issues.length,
+  months: baseline.byMonth.length,
+  cleanRows: { orders: clean.accepted.orders, refunds: clean.accepted.refunds }
 }));
+})().catch((error) => { console.error(error); process.exitCode = 1; });
