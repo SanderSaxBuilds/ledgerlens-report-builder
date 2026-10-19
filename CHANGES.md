@@ -68,3 +68,7 @@ Checked and found correct: CRLF, BOM, trailing newline, duplicate IDs, cumulativ
 - Breaking change for anyone reading the JSON: record keys are now lowercase, issues have a `ref` field, `averageOrderValue` is rounded to cents and wrong-currency refunds no longer also produce `CURRENCY_MISMATCH`. The exceptions CSV columns are unchanged.
 - A duplicated full refund would still be reported as both a duplicate and an over-refund. The sample avoids this case and I left it as is.
 - The live demo link in the README points at the published site, which still runs the old version until the lead publishes.
+
+## Restyle, 19 October 2026
+
+LedgerLens now has its own look instead of the shared green and amber portfolio theme: an accounting ledger in paper and navy ink. Source Serif 4 for headings, Source Sans 3 for text and Source Code Pro for every figure. Ruled lines and a red double margin rule in the header, square corners, borders instead of shadows, index tabs, a totals strip with the net figure double underlined, ruled tables with red money-column rules, and chart series in slate blue, refund red and navy. Only `style.css` and the font link and brand mark in `index.html` changed. No behaviour, IDs or ARIA changed. The gross bar colour now has 3.75:1 contrast against the panel. All three test files and the sample check still pass.
