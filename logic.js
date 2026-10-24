@@ -461,5 +461,151 @@
     return lines.join("\r\n");
   }
 
-  return { parseCsv, buildReport, exportIssuesCsv, REQUIRED_HEADERS };
+  // ---- Report views: a period, a grouping and totals that still reconcile ----
+
+  const GROUPINGS = Object.freeze(["month", "quarter", "customer", "product", "size"]);
+  const SIZE_BANDS = Object.freeze([
+    { key: "a", label: "Under $25", below: 2500 },
+    { key: "b", label: "$25 to $49.99", below: 5000 },
+    { key: "c", label: "$50 to $99.99", below: 10000 },
+    { key: "d", label: "$100 to $249.99", below: 25000 },
+    { key: "e", label: "$250 and over", below: Infinity }
+  ]);
+  const QUARTER_NAMES = ["Q1", "Q2", "Q3", "Q4"];
+
+  function toCents(amount) {
+    return Math.round(Number(amount) * 100);
+  }
+
+  function quarterOf(month) {
+    return month.slice(0, 4) + "-Q" + (Math.floor((Number(month.slice(5, 7)) - 1) / 3) + 1);
+  }
+
+  function monthsBetween(from, to) {
+    const months = [];
+    if (!from || !to || from > to) return months;
+    for (let month = from; month <= to; month = nextMonth(month)) months.push(month);
+    return months;
+  }
+
+  function shiftMonth(month, count) {
+    const index = Number(month.slice(0, 4)) * 12 + Number(month.slice(5, 7)) - 1 + count;
+    return String(Math.floor(index / 12)).padStart(4, "0") + "-" + String((index % 12) + 1).padStart(2, "0");
+  }
+
+  // Product names from an items cell such as "House blend 1 kg x3, Paper filters".
+  // Quantities are dropped and each product is listed once per order.
+  function productsOf(items) {
+    const names = cleanText(items).split(",").map((part) => part.trim().replace(/\s+x\d+$/i, "").trim()).filter(Boolean);
+    return names.length ? Array.from(new Set(names)) : ["(no items listed)"];
+  }
+
+  function sizeBand(cents) {
+    return SIZE_BANDS.find((band) => cents < band.below);
+  }
+
+  function groupLabel(groupBy, key) {
+    if (groupBy === "quarter") return QUARTER_NAMES[Number(key.slice(6)) - 1] + " " + key.slice(0, 4);
+    if (groupBy === "size") return (SIZE_BANDS.find((band) => band.key === key) || { label: key }).label;
+    return key;
+  }
+
+  // summarizeView(report, { from, to, groupBy }) returns one row per group for the period.
+  // Orders count by order date and refunds by refund date, exactly as in buildReport.
+  // For customer, product and order size, a refund is credited to its order's group.
+  // An order with several products is listed under each of them, so product rows can add
+  // up to more than the total. The totals are always counted once and reconcile.
+  function summarizeView(report, options) {
+    if (!report || !report.records) throw new TypeError("summarizeView expects a report from buildReport.");
+    const groupBy = (options && options.groupBy) || "month";
+    if (!GROUPINGS.includes(groupBy)) throw new Error("Unknown grouping " + groupBy + ".");
+    const months = report.byMonth.map((m) => m.month);
+    const from = (options && options.from) || months[0] || "";
+    const to = (options && options.to) || months[months.length - 1] || "";
+    const inPeriod = (date) => { const month = date.slice(0, 7); return month >= from && month <= to; };
+    const orderById = new Map(report.records.orders.map((order) => [order.order_id, order]));
+    const groups = new Map();
+    const totals = { grossCents: 0, refundCents: 0, netCents: 0, orders: 0, refunds: 0 };
+
+    function group(key) {
+      if (!groups.has(key)) groups.set(key, { key, label: groupLabel(groupBy, key), grossCents: 0, refundCents: 0, netCents: 0, orders: 0, refunds: 0 });
+      return groups.get(key);
+    }
+    function keysFor(order, date) {
+      if (groupBy === "month") return [date.slice(0, 7)];
+      if (groupBy === "quarter") return [quarterOf(date.slice(0, 7))];
+      if (groupBy === "customer") return [cleanText(order.customer) || "(no customer name)"];
+      if (groupBy === "product") return productsOf(order.items);
+      return [sizeBand(toCents(order.amount)).key];
+    }
+
+    if (groupBy === "month") monthsBetween(from, to).forEach((month) => group(month));
+    if (groupBy === "quarter") monthsBetween(from, to).forEach((month) => group(quarterOf(month)));
+
+    report.records.orders.forEach((order) => {
+      if (!inPeriod(order.order_date)) return;
+      const cents = toCents(order.amount);
+      totals.grossCents += cents;
+      totals.orders += 1;
+      keysFor(order, order.order_date).forEach((key) => { const g = group(key); g.grossCents += cents; g.orders += 1; });
+    });
+    report.records.refunds.forEach((refund) => {
+      if (!inPeriod(refund.refund_date)) return;
+      const cents = toCents(refund.amount);
+      const order = orderById.get(refund.order_id) || {};
+      totals.refundCents += cents;
+      totals.refunds += 1;
+      keysFor(order, refund.refund_date).forEach((key) => { const g = group(key); g.refundCents += cents; g.refunds += 1; });
+    });
+
+    totals.netCents = totals.grossCents - totals.refundCents;
+    const rows = Array.from(groups.values());
+    rows.forEach((row) => { row.netCents = row.grossCents - row.refundCents; });
+    if (groupBy === "month" || groupBy === "quarter" || groupBy === "size") rows.sort((a, b) => a.key.localeCompare(b.key));
+    else rows.sort((a, b) => b.netCents - a.netCents || a.label.localeCompare(b.label));
+    return { from, to, groupBy, rows, totals, overlapping: groupBy === "product" };
+  }
+
+  function previousPeriod(from, to) {
+    const length = monthsBetween(from, to).length;
+    return { from: shiftMonth(from, -length), to: shiftMonth(from, -1) };
+  }
+
+  // A CSV export of a view. Text cells are guarded against spreadsheet formulas.
+  function exportViewCsv(view) {
+    const lines = [["group", "orders", "gross", "refunds", "net"].map(csvTextCell).join(",")];
+    const amount = (cents) => formatCents(cents).replace(/[$,]/g, "");
+    view.rows.forEach((row) => {
+      lines.push([csvTextCell(row.label), row.orders, amount(row.grossCents), amount(row.refundCents), amount(row.netCents)].join(","));
+    });
+    lines.push([csvTextCell(view.overlapping ? "Total, each order once" : "Total"), view.totals.orders, amount(view.totals.grossCents), amount(view.totals.refundCents), amount(view.totals.netCents)].join(","));
+    return lines.join("\r\n");
+  }
+
+  // Writes source records back to CSV with the original columns, for files corrected in the browser.
+  // Values are kept as they are, quoted only when they hold a comma, quote or line break.
+  function recordsToCsv(headers, records) {
+    const cell = (value) => {
+      const text = value === undefined || value === null ? "" : String(value);
+      return /[",\r\n]/.test(text) || /^\s|\s$/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+    };
+    return [headers.map(cell).join(","), ...records.map((record) => headers.map((key) => cell(record[key])).join(","))].join("\r\n") + "\r\n";
+  }
+
+  function csvHeaders(text) {
+    const input = typeof text === "string" && text.charCodeAt(0) === 0xFEFF ? text.slice(1) : String(text || "");
+    const end = input.search(/\r?\n/);
+    const first = end === -1 ? input : input.slice(0, end);
+    return first.split(",").map((header) => header.trim().replace(/^"|"$/g, "").trim().toLocaleLowerCase("en-US")).filter(Boolean);
+  }
+
+  // Tells an orders export from a refunds export by its header row.
+  function detectSource(text) {
+    const headers = new Set(csvHeaders(text));
+    if (headers.has("refund_id") || headers.has("refund_date")) return "refunds";
+    if (headers.has("order_id") && (headers.has("status") || headers.has("order_date"))) return "orders";
+    return "";
+  }
+
+  return { parseCsv, buildReport, exportIssuesCsv, summarizeView, previousPeriod, exportViewCsv, recordsToCsv, csvHeaders, detectSource, monthsBetween, shiftMonth, productsOf, GROUPINGS, SIZE_BANDS, REQUIRED_HEADERS };
 });

@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const { parseCsv, buildReport, exportIssuesCsv } = require("./logic.js");
+const { parseCsv, buildReport, exportIssuesCsv, summarizeView, previousPeriod, exportViewCsv, recordsToCsv, csvHeaders, detectSource, monthsBetween, shiftMonth, productsOf, SIZE_BANDS } = require("./logic.js");
 
 (async () => {
 const root = __dirname;
@@ -225,6 +225,69 @@ assert.ok(safeCsv.includes('"\'=HYPERLINK(""https://example.invalid"")"'));
 assert.ok(safeCsv.includes('"\'+cmd"'));
 assert.ok(safeCsv.includes('"plain, text"'));
 assert.equal(exportIssuesCsv([]), '"severity","source","row","code","message"');
+
+// Report builder views. Every grouping must reconcile with the headline figures.
+const sum = (rows, key) => rows.reduce((total, row) => total + row[key], 0);
+for (const groupBy of ["month", "quarter", "customer", "size"]) {
+  const view = summarizeView(baseline, { groupBy });
+  assert.equal(view.totals.grossCents, truth.grossCents, groupBy + " gross total");
+  assert.equal(view.totals.refundCents, truth.refundedCents, groupBy + " refund total");
+  assert.equal(view.totals.orders, truth.acceptedOrders, groupBy + " order count");
+  assert.equal(view.totals.refunds, truth.acceptedRefunds, groupBy + " refund count");
+  assert.equal(sum(view.rows, "grossCents"), view.totals.grossCents, groupBy + " rows add up to gross");
+  assert.equal(sum(view.rows, "refundCents"), view.totals.refundCents, groupBy + " rows add up to refunds");
+  assert.equal(sum(view.rows, "orders"), view.totals.orders, groupBy + " rows add up to orders");
+  assert.equal(view.overlapping, false);
+}
+const monthView = summarizeView(baseline, { groupBy: "month" });
+assert.deepEqual(monthView.rows.map((row) => [row.key, row.grossCents, row.refundCents]),
+  Object.entries(truth.byMonth).map(([month, m]) => [month, m.grossCents, m.refundedCents]));
+const quarterView = summarizeView(baseline, { groupBy: "quarter" });
+assert.deepEqual(quarterView.rows.map((row) => row.label), ["Q4 2025", "Q1 2026", "Q2 2026", "Q3 2026"]);
+const sizeView = summarizeView(baseline, { groupBy: "size" });
+assert.ok(sizeView.rows.every((row) => SIZE_BANDS.some((band) => band.label === row.label)));
+const customerView = summarizeView(baseline, { groupBy: "customer" });
+for (let i = 1; i < customerView.rows.length; i++) assert.ok(customerView.rows[i - 1].netCents >= customerView.rows[i].netCents, "customers ranked by net");
+// Products overlap: an order with two products counts under both, but the totals count it once.
+const productView = summarizeView(baseline, { groupBy: "product" });
+assert.equal(productView.overlapping, true);
+assert.equal(productView.totals.grossCents, truth.grossCents);
+assert.ok(sum(productView.rows, "orders") > productView.totals.orders);
+
+// A period narrows both orders and refunds, and empty months still get a row.
+const gap = buildReport(
+  parseCsv("order_id,order_date,customer,items,currency,amount,status\nA,2026-01-05,Ann,\"Tea x2, Cups\",USD,30.00,paid\nB,2026-03-09,Bo,Tea,USD,300.00,paid", { source: "orders" }),
+  parseCsv("refund_id,order_id,refund_date,currency,amount\nR,A,2026-03-01,USD,5.00", { source: "refunds" })
+);
+const marchOnly = summarizeView(gap, { from: "2026-03", to: "2026-03", groupBy: "customer" });
+assert.deepEqual(marchOnly.totals, { grossCents: 30000, refundCents: 500, netCents: 29500, orders: 1, refunds: 1 });
+assert.deepEqual(marchOnly.rows.map((row) => [row.label, row.netCents]), [["Bo", 30000], ["Ann", -500]]);
+assert.deepEqual(summarizeView(gap, { groupBy: "month" }).rows.map((row) => [row.key, row.orders]), [["2026-01", 1], ["2026-02", 0], ["2026-03", 1]]);
+assert.deepEqual(summarizeView(gap, { groupBy: "product" }).rows.map((row) => row.label).sort(), ["Cups", "Tea"]);
+assert.deepEqual(summarizeView(gap, { groupBy: "size" }).rows.map((row) => row.label), ["$25 to $49.99", "$250 and over"]);
+assert.deepEqual(productsOf("House blend 1 kg x3, Paper filters, Paper filters x2"), ["House blend 1 kg", "Paper filters"]);
+assert.deepEqual(productsOf(""), ["(no items listed)"]);
+assert.throws(() => summarizeView(gap, { groupBy: "weekday" }), /Unknown grouping/);
+assert.deepEqual(previousPeriod("2026-01", "2026-03"), { from: "2025-10", to: "2025-12" });
+assert.deepEqual(monthsBetween("2025-11", "2026-02"), ["2025-11", "2025-12", "2026-01", "2026-02"]);
+assert.equal(shiftMonth("2026-01", -1), "2025-12");
+
+// View export: formula guard on labels and a total row that says how products are counted.
+const viewCsv = exportViewCsv({ rows: [{ label: "=SUM(A1)", orders: 2, grossCents: 1050, refundCents: 50, netCents: 1000 }], totals: { orders: 1, grossCents: 1050, refundCents: 50, netCents: 1000 }, overlapping: true });
+assert.deepEqual(viewCsv.split("\r\n"), ['"group","orders","gross","refunds","net"', '"\'=SUM(A1)",2,10.50,0.50,10.00', '"Total, each order once",1,10.50,0.50,10.00']);
+
+// Corrected files written back keep every value and parse to the same rows.
+const awkward = "order_id,order_date,customer,currency,amount,status\nO1,2026-01-01,\"Hollis and Rowe, Bakers\",USD,1.00,paid\nO2,2026-01-02,\"Say \"\"hi\"\"\",USD,2.00,paid\n";
+const awkwardRows = parseCsv(awkward, { source: "orders" });
+const written = recordsToCsv(csvHeaders(awkward), awkwardRows);
+assert.deepEqual(parseCsv(written, { source: "orders" }), awkwardRows);
+assert.ok(written.includes('"Hollis and Rowe, Bakers"'));
+
+// Pasted or dropped text is routed by its header row.
+assert.equal(detectSource(sampleOrders), "orders");
+assert.equal(detectSource(sampleRefunds), "refunds");
+assert.equal(detectSource("﻿\"Order_ID\",Status\nX,paid"), "orders");
+assert.equal(detectSource("hello,world\n1,2"), "");
 
 console.log("LedgerLens logic verified", JSON.stringify({
   result: "passed",

@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LedgerLens | Revenue you can trace back to the row</title>
-<meta name="description" content="Load order and refund CSV exports and get a revenue report reconciled to the cent, with a monthly trend and every excluded row explained. Runs in your browser.">
+<meta name="description" content="Load order and refund CSV exports and get a revenue report reconciled to the cent. Pick any period, group by month, customer, product or order size, fix bad rows in place and download corrected files. Runs in your browser.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='2' fill='%231b2a4a'/%3E%3Cpath d='M9.5 5v22' stroke='%23d88f86' stroke-width='1.5'/%3E%3Cpath d='M14 8v15.5h10' fill='none' stroke='%23fbf8f1' stroke-width='3'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,600;0,8..60,700;1,8..60,400&family=Source+Sans+3:wght@400;600&family=Source+Code+Pro:wght@400;600&display=swap">
@@ -21,20 +22,27 @@
       <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="2" fill="#1b2a4a"/><path d="M6 12.5h20M6 18.5h20" stroke="#fbf8f1" stroke-opacity=".28" stroke-width="1"/><path d="M9.5 5v22" stroke="#d88f86" stroke-width="1.5"/><path d="M14 8v15.5h10" fill="none" stroke="#fbf8f1" stroke-width="3" stroke-linecap="square"/></svg>
       <span>LedgerLens</span>
     </a>
-    <p class="masthead-note">Runs in your browser</p>
+    <div class="masthead-tools">
+      <p class="masthead-note">Files stay in your browser</p>
+      <button type="button" id="shortcuts-open" class="bar-button" aria-haspopup="dialog">Shortcuts <kbd>?</kbd></button>
+    </div>
   </div>
 
   <div class="wrap hero">
     <div class="hero-copy">
       <p class="kicker">Revenue reports from order and refund exports</p>
       <h1>Revenue you can trace back to the row.</h1>
-      <p class="lede">Load your order and refund CSV files. LedgerLens totals them to the cent, charts every month and lists each row it left out, with the fix.</p>
+      <p class="lede">Load your order and refund CSV files. LedgerLens totals them to the cent, lets you slice any period by month, customer, product or order size, and lists each row it left out so you can fix it on the spot.</p>
       <p class="dataset" id="dataset-line">Loading the sample store.</p>
     </div>
 
     <section class="import" id="import" aria-labelledby="import-title">
       <div class="import-head">
         <h2 id="import-title">Your files</h2>
+        <div class="mode-switch" role="group" aria-label="How to add data">
+          <button type="button" data-mode="files" aria-pressed="true">Files</button>
+          <button type="button" data-mode="paste" aria-pressed="false">Paste</button>
+        </div>
         <button type="button" id="import-toggle" class="link-button import-toggle" aria-expanded="true" aria-controls="import-body">Hide</button>
       </div>
       <p class="import-summary" id="import-summary">No files loaded yet.</p>
@@ -55,14 +63,23 @@
             <span class="drop-hint">Choose a file or drop it here</span>
           </label>
         </div>
+        <div class="paste" id="paste-box" hidden>
+          <label class="field-label" for="paste-text">Paste one export at a time, header row first</label>
+          <textarea id="paste-text" rows="6" spellcheck="false" autocomplete="off" placeholder="order_id,order_date,currency,amount,status&#10;A-1001,2026-09-02,USD,48.00,paid"></textarea>
+          <div class="paste-actions">
+            <button type="button" id="paste-use" class="button secondary">Add pasted rows</button>
+            <p class="paste-note" id="paste-note">LedgerLens tells orders from refunds by the header row.</p>
+          </div>
+        </div>
         <div class="import-actions">
           <button type="button" id="run-report" class="button primary">Build report</button>
           <button type="button" id="load-samples" class="button ghost">Use sample data</button>
         </div>
+        <p class="drop-anywhere">You can also drop both files anywhere on the page.</p>
         <details class="columns-help">
           <summary>Which columns do I need?</summary>
           <div class="columns-body">
-            <p><strong>Orders</strong> need <code>order_id, order_date, currency, amount, status</code>. Customer and items are optional. Only paid orders count as revenue.</p>
+            <p><strong>Orders</strong> need <code>order_id, order_date, currency, amount, status</code>. Customer and items are optional, and they unlock the customer and product views. Only paid orders count as revenue.</p>
             <p><strong>Refunds</strong> need <code>refund_id, order_id, refund_date, currency, amount</code>. Reason is optional. If there were no refunds, load a file with just the header row.</p>
             <p>Dates use YYYY-MM-DD, amounts are plain numbers such as 62.95, and the currency is USD. Each file can be up to 5 MB and 100,000 rows.</p>
             <p class="sample-links">Sample files: <a href="orders.csv" download>orders.csv</a> and <a href="refunds.csv" download>refunds.csv</a></p>
@@ -86,8 +103,73 @@
 
   <div id="report" hidden>
     <p class="print-stale">These figures are out of date. The source files changed after this report was built.</p>
+
+    <section class="builder" id="builder" aria-label="Report view">
+      <div class="builder-fields">
+        <div class="field field-period">
+          <span class="field-name" id="period-label">Period</span>
+          <div class="period-pick" role="group" aria-labelledby="period-label">
+            <label class="sr-only" for="from-month">From month</label>
+            <select id="from-month"></select>
+            <span class="period-to" aria-hidden="true">to</span>
+            <label class="sr-only" for="to-month">To month</label>
+            <select id="to-month"></select>
+          </div>
+        </div>
+        <div class="field">
+          <span class="field-name" id="group-label">Group by</span>
+          <div class="seg seg-group" role="group" aria-labelledby="group-label">
+            <button type="button" data-group="month" aria-pressed="true">Month</button>
+            <button type="button" data-group="quarter" aria-pressed="false">Quarter</button>
+            <button type="button" data-group="customer" aria-pressed="false">Customer</button>
+            <button type="button" data-group="product" aria-pressed="false">Product</button>
+            <button type="button" data-group="size" aria-pressed="false">Order size</button>
+          </div>
+        </div>
+        <div class="field" id="chart-field">
+          <span class="field-name" id="chart-label">Chart</span>
+          <div class="seg" role="group" aria-labelledby="chart-label">
+            <button type="button" data-chart="bars" aria-pressed="true">Bars</button>
+            <button type="button" data-chart="running" aria-pressed="false">Running total</button>
+          </div>
+        </div>
+        <div class="field" id="rank-field" hidden>
+          <span class="field-name" id="rank-label">Rank by</span>
+          <div class="seg" role="group" aria-labelledby="rank-label">
+            <button type="button" data-rank="net" aria-pressed="true">Net</button>
+            <button type="button" data-rank="gross" aria-pressed="false">Gross</button>
+            <button type="button" data-rank="refunds" aria-pressed="false">Refunds</button>
+            <button type="button" data-rank="orders" aria-pressed="false">Orders</button>
+          </div>
+        </div>
+      </div>
+      <div class="builder-tools">
+        <button type="button" id="whole-range" class="tool" hidden>Whole range</button>
+        <button type="button" id="undo" class="tool" disabled title="Undo (Ctrl+Z)">Undo</button>
+        <button type="button" id="redo" class="tool" disabled title="Redo (Ctrl+Shift+Z)">Redo</button>
+        <div class="views">
+          <button type="button" id="views-toggle" class="tool" aria-expanded="false" aria-controls="views-panel">Views</button>
+          <div class="views-panel" id="views-panel" hidden>
+            <h3 class="views-title">Ready-made</h3>
+            <ul class="view-list" id="preset-list"></ul>
+            <h3 class="views-title">Saved in this browser</h3>
+            <ul class="view-list" id="saved-list"></ul>
+            <form class="save-view" id="save-form">
+              <label class="sr-only" for="view-name">Name for this view</label>
+              <input id="view-name" type="text" maxlength="40" placeholder="Name this view" autocomplete="off">
+              <button type="submit" id="save-view" class="button secondary">Save</button>
+            </form>
+          </div>
+        </div>
+        <button type="button" id="share-view" class="tool">Copy link</button>
+      </div>
+    </section>
+
     <div class="report-head">
-      <h2 class="report-title" id="report-title">Report</h2>
+      <div>
+        <h2 class="report-title" id="report-title">Report</h2>
+        <p class="report-sub" id="report-sub"></p>
+      </div>
       <p class="report-meta">Built <time id="generated"></time></p>
     </div>
 
@@ -120,18 +202,18 @@
     </section>
 
     <div class="tabs" role="tablist" aria-label="Report views">
-      <button type="button" role="tab" id="tab-summary" data-tab="summary" aria-selected="true" aria-controls="panel-summary">Monthly trend</button>
+      <button type="button" role="tab" id="tab-summary" data-tab="summary" aria-selected="true" aria-controls="panel-summary">Report</button>
       <button type="button" role="tab" id="tab-issues" data-tab="issues" aria-selected="false" aria-controls="panel-issues" tabindex="-1">Exceptions <span id="issue-total" class="count">0</span></button>
-      <button type="button" role="tab" id="tab-records" data-tab="records" aria-selected="false" aria-controls="panel-records" tabindex="-1">Accepted rows</button>
+      <button type="button" role="tab" id="tab-records" data-tab="records" aria-selected="false" aria-controls="panel-records" tabindex="-1">Rows</button>
     </div>
 
     <section id="panel-summary" class="panel" role="tabpanel" aria-labelledby="tab-summary">
       <div class="panel-head">
         <div>
           <h2 id="summary-title">Month by month</h2>
-          <p class="panel-sub">Orders count in the month they were placed, refunds in the month they were paid out.</p>
+          <p class="panel-sub" id="summary-sub">Orders count in the month they were placed, refunds in the month they were paid out.</p>
         </div>
-        <ul class="legend" aria-label="Chart key">
+        <ul class="legend" id="legend" aria-label="Chart key">
           <li><i class="key key-gross" aria-hidden="true"></i>Gross sales</li>
           <li><i class="key key-refund" aria-hidden="true"></i>Refunds</li>
           <li><i class="key key-net" aria-hidden="true"></i>Net revenue</li>
@@ -145,12 +227,14 @@
       <p class="sr-only" id="chart-live" aria-live="polite"></p>
 
       <div class="table-scroll" role="region" tabindex="0" aria-labelledby="month-caption">
-        <table class="data-table">
+        <table class="data-table breakdown">
           <caption id="month-caption">Monthly figures</caption>
-          <thead><tr><th scope="col">Month</th><th scope="col" class="numeric">Orders</th><th scope="col" class="numeric">Gross</th><th scope="col" class="numeric">Refunds</th><th scope="col" class="numeric">Net</th><th scope="col" class="numeric">Net change</th></tr></thead>
+          <thead id="breakdown-head"></thead>
           <tbody id="month-body"></tbody>
+          <tfoot id="breakdown-foot"></tfoot>
         </table>
       </div>
+      <p class="table-note" id="breakdown-note" hidden></p>
 
       <div class="reconcile" aria-label="Reconciliation">
         <div><span>Gross sales</span><strong id="recon-gross"></strong></div>
@@ -166,6 +250,10 @@
         <div>
           <h2 id="issues-title">Rows set aside</h2>
           <p class="panel-sub" id="issues-sub"></p>
+        </div>
+        <div class="fix-meter" id="fix-meter">
+          <p class="fix-meter-text" id="fix-meter-text"></p>
+          <div class="fix-track" aria-hidden="true"><span id="fix-bar"></span></div>
         </div>
       </div>
       <div id="issue-groups" class="issue-groups"></div>
@@ -187,24 +275,29 @@
       <div class="table-scroll" role="region" tabindex="0" aria-labelledby="issue-caption">
         <table class="data-table">
           <caption id="issue-caption" class="sr-only">Exceptions</caption>
-          <thead><tr><th scope="col">Status</th><th scope="col">File</th><th scope="col" class="numeric">Line</th><th scope="col">ID</th><th scope="col">What happened</th></tr></thead>
+          <thead><tr><th scope="col">Status</th><th scope="col">File</th><th scope="col" class="numeric">Line</th><th scope="col">ID</th><th scope="col">What happened</th><th scope="col" class="row-cell"><span class="sr-only">Fix</span></th></tr></thead>
           <tbody id="issue-body"></tbody>
         </table>
       </div>
-      <p class="table-note">Line numbers match the line in your CSV file, counting the header as line 1.</p>
+      <p class="table-note">Line numbers match the line in your CSV file, counting the header as line 1. Fixes change the copy in this browser only, until you download the corrected file.</p>
     </section>
 
     <section id="panel-records" class="panel" role="tabpanel" aria-labelledby="tab-records" hidden>
       <div class="panel-head">
         <div>
           <h2 id="records-title">The rows behind the totals</h2>
-          <p class="panel-sub">Every row counted in the report. The JSON export includes all of them.</p>
+          <p class="panel-sub">Every row counted in the period. The JSON export includes all of them.</p>
         </div>
         <div class="filters" role="group" aria-label="Show accepted">
           <button type="button" data-record="orders" aria-pressed="true">Orders</button>
           <button type="button" data-record="refunds" aria-pressed="false">Refunds</button>
         </div>
       </div>
+      <div class="search-row">
+        <label class="field-label" for="record-search">Search rows</label>
+        <input id="record-search" type="search" placeholder="ID, customer, product or reason" autocomplete="off">
+      </div>
+      <p class="code-filter" id="drill" hidden><span id="drill-text"></span> <button type="button" id="drill-clear" class="link-button">Show every row</button></p>
       <p id="records-summary" class="table-note"></p>
       <div class="table-scroll" role="region" tabindex="0" aria-labelledby="records-caption">
         <table class="data-table">
@@ -218,12 +311,20 @@
     <section class="export" aria-labelledby="export-title">
       <div>
         <h2 id="export-title">Take the report with you</h2>
-        <p>Exports use the last report you built. Build it again after changing a file.</p>
+        <p id="export-note">Exports use the last report you built. Build it again after changing a file.</p>
       </div>
       <div class="export-actions">
-        <button type="button" id="export-json" class="button secondary">Download report JSON</button>
-        <button type="button" id="export-csv" class="button secondary">Download exceptions CSV</button>
+        <button type="button" id="export-view" class="button secondary">This view as CSV</button>
+        <button type="button" id="export-json" class="button secondary">Report JSON</button>
+        <button type="button" id="export-csv" class="button secondary">Exceptions CSV</button>
         <button type="button" id="print-report" class="button secondary">Print or save PDF</button>
+      </div>
+      <div class="export-fixed" id="export-fixed" hidden>
+        <p id="export-fixed-text"></p>
+        <div class="export-actions">
+          <button type="button" id="export-fixed-orders" class="button primary">Corrected orders CSV</button>
+          <button type="button" id="export-fixed-refunds" class="button primary">Corrected refunds CSV</button>
+        </div>
       </div>
     </section>
   </div>
@@ -235,5 +336,49 @@
     <p>Sample data is fictional. Files you load stay in your browser.</p>
   </div>
 </footer>
+
+<dialog class="sheet-dialog" id="fix-dialog" aria-labelledby="fix-title">
+  <form method="dialog" class="fix-form" id="fix-form">
+    <div class="dialog-head">
+      <h2 id="fix-title">Fix this row</h2>
+      <p class="dialog-sub" id="fix-sub"></p>
+    </div>
+    <p class="fix-hint" id="fix-hint"></p>
+    <div class="fix-fields" id="fix-fields"></div>
+    <p class="fix-check" id="fix-check" aria-live="polite"></p>
+    <div class="dialog-actions">
+      <button type="submit" id="fix-save" class="button primary">Save and rebuild</button>
+      <button type="button" id="fix-remove" class="button ghost">Remove this row</button>
+      <button type="button" id="fix-cancel" class="link-button">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="sheet-dialog" id="shortcuts-dialog" aria-labelledby="shortcuts-title">
+  <div class="dialog-head">
+    <h2 id="shortcuts-title">Keyboard shortcuts</h2>
+    <p class="dialog-sub">They work anywhere except while you type in a field.</p>
+  </div>
+  <dl class="keys">
+    <dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></dt><dd>Report, Exceptions, Rows</dd>
+    <dt><kbd>M</kbd> <kbd>Q</kbd> <kbd>C</kbd> <kbd>P</kbd> <kbd>O</kbd></dt><dd>Group by month, quarter, customer, product or order size</dd>
+    <dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>Move the period back or forward by its own length</dd>
+    <dt><kbd>A</kbd></dt><dd>Whole range</dd>
+    <dt><kbd>R</kbd></dt><dd>Switch between bars and running total</dd>
+    <dt><kbd>/</kbd></dt><dd>Search the open tab</dd>
+    <dt><kbd>Ctrl</kbd> <kbd>Z</kbd></dt><dd>Undo a view change or a fix</dd>
+    <dt><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Z</kbd></dt><dd>Redo</dd>
+    <dt><kbd>V</kbd></dt><dd>Open saved views</dd>
+    <dt><kbd>L</kbd></dt><dd>Copy a link to this view</dd>
+    <dt><kbd>E</kbd></dt><dd>Download this view as CSV</dd>
+    <dt>In the chart</dt><dd>Arrow keys move between months. <kbd>Shift</kbd> with an arrow widens the period. Drag across the bars to pick a period.</dd>
+  </dl>
+  <div class="dialog-actions">
+    <button type="button" id="shortcuts-close" class="button primary">Close</button>
+  </div>
+</dialog>
+
+<div class="drop-overlay" id="drop-overlay" hidden><p>Drop your orders and refunds files. LedgerLens works out which is which.</p></div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toast-text"></span><button type="button" id="toast-undo" class="toast-undo">Undo</button></div>
 </body>
 </html>

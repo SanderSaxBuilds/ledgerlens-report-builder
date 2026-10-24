@@ -72,3 +72,31 @@ Checked and found correct: CRLF, BOM, trailing newline, duplicate IDs, cumulativ
 ## Restyle, 19 October 2026
 
 LedgerLens now has its own look instead of the shared green and amber portfolio theme: an accounting ledger in paper and navy ink. Source Serif 4 for headings, Source Sans 3 for text and Source Code Pro for every figure. Ruled lines and a red double margin rule in the header, square corners, borders instead of shadows, index tabs, a totals strip with the net figure double underlined, ruled tables with red money-column rules, and chart series in slate blue, refund red and navy. Only `style.css` and the font link and brand mark in `index.html` changed. No behaviour, IDs or ARIA changed. The gross bar colour now has 3.75:1 contrast against the panel. All three test files and the sample check still pass.
+
+## Report builder, 24 October 2026
+
+LedgerLens was a fixed twelve-month report. It is now a report builder for any period and any grouping, and exceptions can be fixed where they are listed.
+
+Features:
+
+- Period. Pick the first and last month, drag across the chart, or focus the chart and use Shift and the arrow keys. Enter picks one month. Months outside the period stay on the chart, dimmed, so the period is always seen in context. The KPI row compares the period with the one before it when the data reaches that far, and otherwise the last month with the one before.
+- Grouping. Month, quarter, customer, product and order size. Customer, product and size views draw ranked bars, ranked by net, gross, refunds or paid orders. Product rows overlap because an order can hold several products, so the table total says it counts each order once. Month and quarter views can show bars or a running total.
+- Rows. Every bar and every table row opens the accepted rows behind it, with a search box and a line that totals what is shown.
+- Fix in place. Each exception has a Fix button. The dialog shows the row, flags the field at fault and checks the row live as you type. Save rebuilds the report, Remove drops the row, and both can be undone. After a fix, the corrected orders or refunds file can be downloaded with the original columns.
+- Import. Drop files anywhere on the page, or paste the CSV text. The header row decides whether text is orders or refunds, and a file dropped on the wrong slot is moved to the right one.
+- Views. Undo and redo for every change, seven ready-made views, views saved in this browser, and a link that reopens the same view. Local storage is optional and the page works without it.
+- Export. This view as CSV, guarded against spreadsheet formulas, next to the existing JSON, exceptions CSV and print.
+- Keyboard. Number keys switch tabs, letters set the grouping, brackets move the period, Ctrl+Z and Ctrl+Shift+Z undo and redo, and ? lists every shortcut.
+
+Design: removed the ruled-line pattern behind the masthead and the red square marker, added a sticky builder bar on wide screens, segmented controls, a toast with Undo, and a drop overlay. Reduced motion turns off the count-up and the bar animation. Print hides the builder and the Fix controls.
+
+Bugs fixed on the way: the favicon request returned 404, and visually hidden labels inside the new table headers widened the page on phones until the table scroller became their positioning box.
+
+Verification:
+
+- `node test-logic.js`: passed, with new checks that every grouping reconciles to the headline figures, product overlap, quarter labels, size bands, period filtering, the view CSV, the corrected-file round trip and header detection.
+- `node test-regressions.js`: 9 of 9 passed.
+- `node test-second-dataset.js`: 26 of 26 passed, 6 of them new.
+- `node tools/make-sample.mjs --check`: files match.
+- Headless Edge with real mouse and keyboard input at 320, 360, 390, 768, 1024, 1280, 1440, 1920 and 2560 px wide: dragging a period, undo and redo, every shortcut, drilling into rows, fixing and removing a row, saving and reopening a view, the share link, pasting, print media and reduced motion. No horizontal overflow and no page errors.
+- Not tested: a real drag from the file manager, the system clipboard outside headless Edge, and finished downloads.

@@ -8,13 +8,16 @@ Built by Alexandr Khrustalev. The bundled sample data is fictional.
 
 ## What it does
 
-- Reads both files locally. Nothing is uploaded.
+- Reads both files locally. Nothing is uploaded. Choose files, drop them anywhere on the page, or paste the CSV text. A file dropped on the wrong slot is moved to the right one by its header row.
 - Counts paid orders as revenue and subtracts refunds in the month they were paid out. All sums use integer cents.
-- Shows net revenue, gross sales, refunds, paid orders and average order, each with the change from the previous month.
-- Draws gross sales, refunds and net revenue for the last twelve months, with values on hover, tap or arrow keys, and the same figures in a table.
-- Groups exceptions by problem, such as duplicate orders, impossible dates or refunds larger than their order, and says how to fix each one. A searchable table lists every exception with its CSV line number.
-- Lists the accepted orders and refunds behind the totals.
-- Exports the full report as JSON and the exceptions as CSV, with cells guarded against spreadsheet formulas. Printing includes all three views.
+- Builds a report for any period: pick the months, drag across the chart, or use Shift and the arrow keys. Months outside the period stay on the chart, dimmed.
+- Groups the period by month, quarter, customer, product or order size, and ranks the groups by net, gross, refunds or paid orders. An order with several products counts under each product, and the total still counts it once.
+- Shows net revenue, gross sales, refunds, paid orders and average order for the period, compared with the period before it when the data reaches back that far.
+- Draws bars or a running total for month and quarter views, and ranked bars for the other groupings. Every bar opens the rows behind it.
+- Groups exceptions by problem and says how to fix each one. Fix opens the row, flags the bad field and checks it as you type. Save rebuilds the report, and the corrected orders or refunds file can be downloaded.
+- Undo and redo for every change, saved views in this browser, ready-made views, and a link that reopens the same view.
+- Exports the view as CSV, the full report as JSON and the exceptions as CSV, with text cells guarded against spreadsheet formulas. Printing gives a clean report.
+- Keyboard shortcuts for everything above. Press ? to see them.
 
 Changing a file disables export until the report is built again. A failed build clears the previous totals. If you load your own orders file while the refunds are still the sample, LedgerLens asks for your refunds file instead of mixing the two.
 
@@ -41,9 +44,9 @@ To rebuild the files, run `node tools/make-sample.mjs`. To check the files on di
 
 Serve this folder with any static web server and open `index.html`. There is no install or build step.
 
-- `node test-logic.js` checks the parser and reconciliation, and compares the sample report with the generator's own ground truth.
-- `node test-regressions.js` pins the defects fixed in the October 2026 review.
-- `node test-second-dataset.js` runs the real application code against a small simulated DOM. It does not check browser layout or completed downloads.
+- `node test-logic.js` checks the parser and reconciliation, compares the sample report with the generator's own ground truth, and checks that every grouping adds up to the same totals.
+- `node test-regressions.js` pins the defects fixed in the October 2026 review, 9 tests.
+- `node test-second-dataset.js` runs the real application code against a small simulated DOM, 26 checks, including grouping, undo, fixing and removing a row, the corrected file, pasting and the view export. It does not check browser layout or completed downloads.
 
 ## Boundaries
 
