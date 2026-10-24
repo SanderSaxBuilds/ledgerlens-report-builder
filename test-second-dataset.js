@@ -27,7 +27,7 @@ for (const [, target] of html.matchAll(/aria-(?:controls|labelledby|describedby)
 }
 for (const [, target] of html.matchAll(/<label[^>]*\bfor="([^"]+)"/g)) assert.ok(nodes.has(target), `label target #${target} must exist`);
 const groups = {};
-for (const name of ['tab', 'filter', 'record']) {
+for (const name of ['tab', 'filter', 'record', 'group', 'rank', 'chart', 'mode']) {
   groups[`[data-${name}]`] = [...html.matchAll(new RegExp(`data-${name}="([^"]+)"`, 'g'))].map(m => { const e = new Element(); e.dataset[name] = m[1]; return e; });
 }
 const downloads = [];
@@ -41,7 +41,7 @@ const document = {
   get activeElement() { return activeElement; }
 };
 const files = Object.fromEntries(['orders.csv', 'refunds.csv'].map(name => [name, fs.readFileSync(path.join(__dirname, name), 'utf8')]));
-const context = vm.createContext({ document, console, Intl, Date, Blob, setTimeout: () => {}, URL: { createObjectURL: blob => { blobs.push(blob); return 'blob:test'; }, revokeObjectURL: () => {} }, fetch: async name => ({ ok: true, text: async () => files[name] }), window: { print: () => {} } });
+const context = vm.createContext({ document, console, Intl, Date, Blob, setTimeout: () => {}, clearTimeout: () => {}, URL: { createObjectURL: blob => { blobs.push(blob); return 'blob:test'; }, revokeObjectURL: () => {} }, fetch: async name => ({ ok: true, text: async () => files[name] }), window: { print: () => {} } });
 vm.runInContext(fs.readFileSync(path.join(__dirname, 'logic.js'), 'utf8'), context);
 vm.runInContext(fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8'), context);
 const tick = () => new Promise(resolve => setImmediate(resolve));
@@ -131,6 +131,78 @@ async function check(name, fn) {
     await groups['[data-record]'].find(e => e.dataset.record === 'refunds').fire('click');
     assert.match($('records-body').innerHTML, /RF-5001/);
     await groups['[data-record]'].find(e => e.dataset.record === 'orders').fire('click');
+  });
+
+  // Report builder.
+  const pick = (name, value) => groups[`[data-${name}]`].find(e => e.dataset[name] === value);
+  await check('grouping by product ranks products and counts each order once', async () => {
+    await pick('group', 'product').fire('click');
+    assert.equal($('summary-title').textContent, 'Products, ranked by net revenue');
+    assert.ok(($('monthly-chart').innerHTML.match(/class="rank-row"/g) || []).length > 1);
+    assert.match($('breakdown-foot').innerHTML, /Total, each order once/);
+    assert.match($('breakdown-foot').innerHTML, />288</);
+    await pick('rank', 'orders').fire('click');
+    assert.equal($('summary-title').textContent, 'Products, ranked by paid orders');
+  });
+  await check('undo and redo step through view changes', async () => {
+    await $('undo').fire('click');
+    assert.equal($('summary-title').textContent, 'Products, ranked by net revenue');
+    await $('undo').fire('click');
+    assert.equal($('summary-title').textContent, 'Month by month');
+    await $('redo').fire('click');
+    assert.equal($('summary-title').textContent, 'Products, ranked by net revenue');
+    await pick('group', 'quarter').fire('click');
+    await pick('chart', 'running').fire('click');
+    assert.equal($('summary-title').textContent, 'Running total, quarter by quarter');
+    assert.equal($('redo').disabled, true, 'a new change clears redo');
+  });
+  await check('this view as CSV reconciles with the headline figures', async () => {
+    await pick('group', 'customer').fire('click');
+    await $('export-view').fire('click');
+    const lines = (await blobs.at(-1).text()).split('\r\n');
+    assert.equal(lines[0], '"group","orders","gross","refunds","net"');
+    assert.equal(lines.at(-1), '"Total",288,32663.05,1278.90,31384.15');
+  });
+  await check('fixing a row in place clears its exception and can be undone', async () => {
+    await pick('group', 'month').fire('click');
+    for (const fn of $('issue-body').handlers.click) fn({ target: { closest: () => ({ dataset: { fix: 'orders:128:INVALID_DATE' } }) } });
+    assert.equal($('fix-dialog').hidden, false);
+    assert.match($('fix-title').textContent, /Fix order SCS-10126/);
+    assert.match($('fix-fields').innerHTML, /is-flagged"><label for="fix-field-order_date"/);
+    await $('fix-fields').fire('input', { target: { dataset: { field: 'order_date' }, value: '2026-02-28' } });
+    assert.match($('fix-check').className, /is-clear/);
+    await $('fix-form').fire('submit');
+    assert.equal($('issue-total').textContent, 26);
+    assert.equal($('gross').textContent, '$32,694.00');
+    assert.equal($('export-fixed').hidden, false);
+    await $('export-fixed-orders').fire('click');
+    const corrected = await blobs.at(-1).text();
+    assert.match(corrected, /SCS-10126,2026-02-28,/);
+    assert.doesNotMatch(corrected, /2026-02-30/);
+    await $('toast-undo').fire('click');
+    assert.equal($('issue-total').textContent, 27);
+    assert.equal($('gross').textContent, '$32,663.05');
+  });
+  await check('removing a duplicate refund row', async () => {
+    for (const fn of $('issue-body').handlers.click) fn({ target: { closest: () => ({ dataset: { fix: 'refunds:20:DUPLICATE_REFUND' } }) } });
+    await $('fix-remove').fire('click');
+    assert.equal($('issue-total').textContent, 26);
+    assert.equal($('refunded').textContent, '$1,278.90', 'the kept first row still counts');
+    await $('undo').fire('click');
+    assert.equal($('issue-total').textContent, 27);
+  });
+  await check('pasted text is routed by its header row', async () => {
+    $('paste-text').value = 'refund_id,order_id,refund_date,currency,amount\nR-1,A-1,2026-08-09,USD,5.00';
+    await $('paste-use').fire('click');
+    assert.match($('paste-note').textContent, /Added as refunds/);
+    $('paste-text').value = 'order_id,order_date,currency,amount,status\nA-1,2026-08-02,USD,40.00,paid\nA-2,2026-09-03,USD,25.50,paid';
+    await $('paste-use').fire('click');
+    assert.equal($('net').textContent, '$60.50');
+    $('paste-text').value = 'hello,world\n1,2';
+    await $('paste-use').fire('click');
+    assert.match($('notice').textContent, /column names/);
+    await $('load-samples').fire('click');
+    assert.equal($('net').textContent, '$31,384.15');
   });
 
   // Regression: an own file was silently combined with the other bundled sample file.
