@@ -51,3 +51,11 @@ Serve this folder with any static web server and open `index.html`. There is no 
 ## Boundaries
 
 This is a single-currency reporting tool. It has no currency conversion, bank connection, cloud storage, tax calculation, accounting certification or access control.
+
+## Contact
+
+More work by Alexandr Khrustalev in the [portfolio](https://sandersaxbuilds.github.io/selected-work/). Contact on Telegram [@sandersax](https://t.me/sandersax).
+
+## License
+
+MIT. See LICENSE.
