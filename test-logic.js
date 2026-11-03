@@ -5,8 +5,9 @@ const { parseCsv, buildReport, exportIssuesCsv, summarizeView, previousPeriod, e
 
 (async () => {
 const root = __dirname;
-const sampleOrders = fs.readFileSync(path.join(root, "orders.csv"), "utf8");
-const sampleRefunds = fs.readFileSync(path.join(root, "refunds.csv"), "utf8");
+// Normalize CRLF so a Windows checkout with core.autocrlf still matches the generator.
+const sampleOrders = fs.readFileSync(path.join(root, "orders.csv"), "utf8").replace(/\r\n/g, "\n");
+const sampleRefunds = fs.readFileSync(path.join(root, "refunds.csv"), "utf8").replace(/\r\n/g, "\n");
 
 // The bundled sample must be exactly what the seeded generator writes.
 const { makeSample } = await import("./tools/make-sample.mjs");

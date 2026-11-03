@@ -253,7 +253,8 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const root = join(dirname(fileURLToPath(import.meta.url)), '..');
   const { ordersCsv, refundsCsv, truth } = makeSample();
   if (process.argv.includes('--check')) {
-    const same = readFileSync(join(root, 'orders.csv'), 'utf8') === ordersCsv && readFileSync(join(root, 'refunds.csv'), 'utf8') === refundsCsv;
+    const lf = (text) => text.replace(/\r\n/g, '\n');
+    const same = lf(readFileSync(join(root, 'orders.csv'), 'utf8')) === ordersCsv && lf(readFileSync(join(root, 'refunds.csv'), 'utf8')) === refundsCsv;
     console.log(same ? 'Sample files match the generator.' : 'Sample files differ from the generator output.');
     process.exit(same ? 0 : 1);
   }
